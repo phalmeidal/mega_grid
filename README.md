@@ -86,16 +86,16 @@ Context context) {
 ```
 
 ### Customization
-You can customize the appearance of the grid using the MegaGridStyle class. Here are some of the properties you can set:
+You can customize the appearance of the grid using the ```MegaGridStyle``` class. Here are some of the properties you can set:
 
-headerTextStyle: TextStyle for the header cells.
-cellTextStyle: TextStyle for the data cells.
-rowTextStyle: TextStyle for the rows.
-rowAlternateTextStyle: TextStyle for alternate rows.
-headerBackgroundColor: Background color for the header row.
-rowBackgroundColor: Background color for the rows.
-rowAlternateBackgroundColor: Background color for alternate rows.
-borderRadius: Border radius for the grid.
-border: Border for the grid.
-borderColor: Color of the border.
-borderWidth: Width of the border.
+```headerTextStyle:``` TextStyle for the header cells.
+```cellTextStyle:``` TextStyle for the data cells.
+```rowTextStyle:``` TextStyle for the rows.
+```rowAlternateTextStyle:``` TextStyle for alternate rows.
+```headerBackgroundColor:``` Background color for the header row.
+```rowBackgroundColor:``` Background color for the rows.
+```rowAlternateBackgroundColor:``` Background color for alternate rows.
+```borderRadius:``` Border radius for the grid.
+```border:``` Border for the grid.
+```borderColor:``` Color of the border.
+```borderWidth:``` Width of the border.
