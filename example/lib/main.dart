@@ -13,12 +13,13 @@ class MyApp extends StatelessWidget {
     final items = [
       TableItems(nome: 'John', idade: 30, id: 1),
       TableItems(nome: 'Jane', idade: 25, id: 2),
+      TableItems(nome: 'Samuel', idade: 22, id: 3),
     ];
 
     final columns = [
+      const MegaColumn(title: 'ID', field: 'id', titleTextAlign: TextAlign.center, cellTextAlign: TextAlign.center),
       const MegaColumn(title: 'Name', field: 'nome', titleTextAlign: TextAlign.left, cellTextAlign: TextAlign.left),
       const MegaColumn(title: 'Age', field: 'idade', titleTextAlign: TextAlign.right, cellTextAlign: TextAlign.right),
-      const MegaColumn(title: 'ID', field: 'id', titleTextAlign: TextAlign.center, cellTextAlign: TextAlign.center),
     ];
 
     return MaterialApp(
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
             rowAlternateBackgroundColor: Colors.blueGrey,
             rowAlternateTextStyle: TextStyle(color: Colors.black),
             borderColor: Colors.blue,
-            borderWidth: 2.0,
+            borderWidth: 5.0,
           ),
         ),
       ),
