@@ -10,15 +10,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      TableItems(nome: 'John', idade: 30, id: 1),
-      TableItems(nome: 'Jane', idade: 25, id: 2),
+    final columns = [
+      const MegaColumn(title: 'Empresa', field: 'company'),
+      const MegaColumn(title: 'Tomador', field: 'borrower'),
+      const MegaColumn(title: 'Parcela', field: 'installment'),
+      const MegaColumn(title: 'Vencimento', field: 'deadline'),
+      const MegaColumn(title: 'Valor', field: 'value'),
     ];
 
-    final columns = [
-      const MegaColumn(title: 'Name', field: 'nome', titleTextAlign: TextAlign.left, cellTextAlign: TextAlign.left),
-      const MegaColumn(title: 'Age', field: 'idade', titleTextAlign: TextAlign.right, cellTextAlign: TextAlign.right),
-      const MegaColumn(title: 'ID', field: 'id', titleTextAlign: TextAlign.center, cellTextAlign: TextAlign.center),
+    final List<TableItem> items = [
+      {'company': 'Empresa 1', 'borrower': 'Pessoa 1', 'installment': 2, 'deadline': '01/01/2026', 'value': 1400.0},
+      {'company': 'Empresa 2', 'borrower': 'Pessoa 2', 'installment': 3, 'deadline': '01/02/2026', 'value': 1500.0},
+      {'company': 'Empresa 3', 'borrower': 'Pessoa 3', 'installment': 4, 'deadline': '01/03/2026', 'value': 1600.0},
+      {'company': 'Empresa 4', 'borrower': 'Pessoa 4', 'installment': 5, 'deadline': '01/04/2026', 'value': 1700.0},
+      {'company': 'Empresa 5', 'borrower': 'Pessoa 5', 'installment': 6, 'deadline': '01/05/2026', 'value': 1800.0},
     ];
 
     return MaterialApp(
@@ -27,7 +32,7 @@ class MyApp extends StatelessWidget {
         body: MegaGrid(
           items: items,
           columns: columns,
-          width: 600,
+          width: 1000,
           style: const MegaGridStyle(
             headerTextStyle: TextStyle(fontWeight: FontWeight.bold),
             cellTextStyle: TextStyle(color: Colors.black),
