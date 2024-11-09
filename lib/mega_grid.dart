@@ -1,6 +1,6 @@
 library mega_grid;
 
-export 'src/table_items.dart';
-export 'src/table_styles.dart';
-export 'src/table_generator.dart';
-export 'src/table_columns.dart';
+export 'src/models/table_items.dart';
+export 'src/ui/mega_grid/mega_column.dart';
+export 'src/ui/mega_grid/mega_grid_style.dart';
+export 'src/ui/mega_grid/mega_grid_widget.dart';

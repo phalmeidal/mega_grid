@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'table_items.dart';
-import 'table_styles.dart';
-import 'table_columns.dart';
+import '../../models/table_items.dart';
+import 'mega_column.dart';
+import 'mega_grid_style.dart';
 
 class MegaGrid extends StatelessWidget {
-  final List<TableItems> items;
+  final List<TableItem> items;
   final MegaGridStyle? style;
   final List<MegaColumn> columns;
   final double? width;
@@ -35,28 +35,12 @@ class MegaGrid extends StatelessWidget {
             child: ClipRRect(
               borderRadius: style?.borderRadius ?? BorderRadius.zero,
               child: DataTable(
-                headingRowColor: MaterialStateProperty.all(style?.headerBackgroundColor),
+                headingRowColor: WidgetStateProperty.all(style?.headerBackgroundColor),
                 border: TableBorder(
-                  top: style?.border?.top ??
-                      BorderSide(
-                        color: style?.borderColor ?? Colors.black,
-                        width: style?.borderWidth ?? 1.0,
-                      ),
-                  bottom: style?.border?.bottom ??
-                      BorderSide(
-                        color: style?.borderColor ?? Colors.black,
-                        width: style?.borderWidth ?? 1.0,
-                      ),
-                  left: style?.border?.left ??
-                      BorderSide(
-                        color: style?.borderColor ?? Colors.black,
-                        width: style?.borderWidth ?? 1.0,
-                      ),
-                  right: style?.border?.right ??
-                      BorderSide(
-                        color: style?.borderColor ?? Colors.black,
-                        width: style?.borderWidth ?? 1.0,
-                      ),
+                  top: style?.border?.top ?? BorderSide(color: style?.borderColor ?? Colors.black, width: style?.borderWidth ?? 1.0),
+                  bottom: style?.border?.bottom ?? BorderSide(color: style?.borderColor ?? Colors.black, width: style?.borderWidth ?? 1.0),
+                  left: style?.border?.left ?? BorderSide(color: style?.borderColor ?? Colors.black, width: style?.borderWidth ?? 1.0),
+                  right: style?.border?.right ?? BorderSide(color: style?.borderColor ?? Colors.black, width: style?.borderWidth ?? 1.0),
                   borderRadius: style?.borderRadius ?? BorderRadius.zero,
                 ),
                 columns: columns.map((column) {
@@ -76,24 +60,13 @@ class MegaGrid extends StatelessWidget {
                   final index = entry.key;
                   final item = entry.value;
                   return DataRow(
-                    color: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
-                      if (style?.rowAlternateBackgroundColor == null) {
-                        return style?.rowBackgroundColor;
-                      }
+                    color: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
                       return index.isEven ? style?.rowBackgroundColor : style?.rowAlternateBackgroundColor;
                     }),
                     cells: columns.map((column) {
-                      final cellValue = item.toMap()[column.field] ?? '';
+                      final cellValue = item[column.field] ?? '';
 
-                      TextStyle? textStyle = style?.cellTextStyle;
-
-                      if (style?.rowTextStyle != null) {
-                        textStyle = style?.rowTextStyle;
-                      }
-
-                      if (style?.rowAlternateTextStyle != null && !index.isEven) {
-                        textStyle = style?.rowAlternateTextStyle;
-                      }
+                      TextStyle? textStyle = index.isEven ? style?.rowTextStyle : style?.rowAlternateTextStyle ?? style?.cellTextStyle;
 
                       return DataCell(
                         Text(
