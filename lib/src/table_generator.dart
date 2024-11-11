@@ -20,12 +20,12 @@ class MegaGrid extends StatefulWidget {
   });
 
   @override
-  _MegaGridState createState() => _MegaGridState();
+  MegaGridState createState() => MegaGridState();
 }
 
-class _MegaGridState extends State<MegaGrid> {
+class MegaGridState extends State<MegaGrid> {
   late List<MegaColumn> _columns;
-  Map<int, double> _columnWidths = {};
+  final Map<int, double> _columnWidths = {};
 
   @override
   void initState() {
@@ -36,44 +36,18 @@ class _MegaGridState extends State<MegaGrid> {
     }
   }
 
-  double get _totalWidth => _columnWidths.values.fold(0, (sum, width) => sum + width);
-
-  void _onColumnDragUpdate(int index, DragUpdateDetails details) {
-    setState(() {
-      double deltaX = details.delta.dx;
-
-      // Limite mínimo de largura da coluna atual
-      if ((_columnWidths[index] ?? 100.0) + deltaX < 50.0) {
-        deltaX = 50.0 - (_columnWidths[index] ?? 100.0);
-      }
-
-      // Limite máximo para o tamanho total das colunas dentro da tabela
-      if (_totalWidth + deltaX > (widget.width ?? double.infinity)) {
-        deltaX = (widget.width ?? double.infinity) - _totalWidth;
-      }
-
-      // Atualiza a largura da coluna
-      _columnWidths[index] = (_columnWidths[index] ?? 100.0) + deltaX;
-
-      // Lógica para troca de posição das colunas
-      if (deltaX < 0 && index > 0 && (_columnWidths[index] ?? 100.0) < (_columnWidths[index - 1] ?? 100.0)) {
-        _swapColumns(index, index - 1);
-      } else if (deltaX > 0 && index < _columns.length - 1 && (_columnWidths[index] ?? 100.0) > (_columnWidths[index + 1] ?? 100.0)) {
-        _swapColumns(index, index + 1);
-      }
-    });
-  }
-
   void _swapColumns(int index1, int index2) {
-    // Troca as colunas
-    final tempColumn = _columns[index1];
-    _columns[index1] = _columns[index2];
-    _columns[index2] = tempColumn;
+    setState(() {
+      // Troca as colunas
+      final tempColumn = _columns[index1];
+      _columns[index1] = _columns[index2];
+      _columns[index2] = tempColumn;
 
-    // Troca as larguras das colunas
-    final tempWidth = _columnWidths[index1] ?? 100.0;
-    _columnWidths[index1] = _columnWidths[index2] ?? 100.0;
-    _columnWidths[index2] = tempWidth;
+      // Troca as larguras das colunas
+      final tempWidth = _columnWidths[index1] ?? 100.0;
+      _columnWidths[index1] = _columnWidths[index2] ?? 100.0;
+      _columnWidths[index2] = tempWidth;
+    });
   }
 
   @override
@@ -121,23 +95,44 @@ class _MegaGridState extends State<MegaGrid> {
                   final column = entry.value;
 
                   return DataColumn(
-                    label: GestureDetector(
-                      onHorizontalDragUpdate: (details) => _onColumnDragUpdate(index, details),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.drag_indicator, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          AnimatedContainer(
-                            duration: Duration(milliseconds: 200),
-                            width: _columnWidths[index] ?? 100.0,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              column.title,
-                              style: widget.style?.headerTextStyle,
-                              textAlign: column.titleTextAlign,
+                    label: Draggable<int>(
+                      data: index,
+                      feedback: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black26,
+                                offset: Offset(2, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            column.title,
+                            style: widget.style?.headerTextStyle?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ],
+                        ),
+                      ),
+                      childWhenDragging: Opacity(
+                        opacity: 0.3,
+                        child: _buildColumnLabel(column, index),
+                      ),
+                      child: DragTarget<int>(
+                        onAccept: (draggedIndex) {
+                          _swapColumns(draggedIndex, index);
+                        },
+                        builder: (context, candidateData, rejectedData) {
+                          return _buildColumnLabel(column, index);
+                        },
                       ),
                     ),
                   );
@@ -182,6 +177,25 @@ class _MegaGridState extends State<MegaGrid> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildColumnLabel(MegaColumn column, int index) {
+    return Row(
+      children: [
+        //const Icon(Icons.drag_indicator, size: 16, color: Colors.grey),
+        // const SizedBox(width: 4),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: _columnWidths[index] ?? 100.0,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            column.title,
+            style: widget.style?.headerTextStyle,
+            textAlign: column.titleTextAlign,
+          ),
+        ),
+      ],
     );
   }
 }
