@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
         body: MegaGrid(
           items: items,
           columns: columns,
-          width: 1000,
+          feedback: (t) => customFeedback(t),
           style: MegaGridStyle(
             headerTextStyle: const TextStyle(fontWeight: FontWeight.bold),
             cellTextStyle: const TextStyle(color: Colors.black),
@@ -49,3 +49,22 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+Widget Function(String) customFeedback = (String? value) {
+  return Material(
+    elevation: 4,
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 114, 200, 219).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(children: [
+        Text(value ?? ""),
+        const Icon(Icons.query_stats),
+        // const Icon(Icons.drag_indicator),
+      ]),
+    ),
+  );
+};

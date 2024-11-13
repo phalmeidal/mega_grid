@@ -10,6 +10,7 @@ class MegaGrid extends StatefulWidget {
   final double? width;
   final double? height;
   final double minColumnWidth;
+  final Widget Function(String text)? feedback;
 
   const MegaGrid({
     super.key,
@@ -19,6 +20,7 @@ class MegaGrid extends StatefulWidget {
     this.width,
     this.height,
     this.minColumnWidth = 70.0,
+    this.feedback,
   });
 
   @override
@@ -113,7 +115,7 @@ class MegaGridState extends State<MegaGrid> {
     );
   }
 
-  Widget _buildHeaderCell(MegaColumn column, int index) {
+  Widget _buildHeaderCell(MegaColumn column, int index, Widget Function(String title)? feedback) {
     return Container(
       width: _columnWidths[index],
       decoration: BoxDecoration(
@@ -133,24 +135,26 @@ class MegaGridState extends State<MegaGrid> {
             padding: const EdgeInsets.all(8),
             child: Draggable<int>(
               data: index,
-              feedback: Material(
-                elevation: 4,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    column.title,
-                    style: widget.style?.headerTextStyle?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+              feedback: feedback != null
+                  ? feedback(column.title)
+                  : Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: widget.style?.feedbackBgColor ?? Colors.grey.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          column.title,
+                          style: widget.style?.headerTextStyle?.copyWith(
+                            color: widget.style?.feedbackTextColor ?? Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
               child: DragTarget<int>(
                 onAcceptWithDetails: (draggedIndex) {
                   _swapColumns(draggedIndex.data, index);
@@ -242,7 +246,7 @@ class MegaGridState extends State<MegaGrid> {
                   children: [
                     Row(
                       children: _columns.asMap().entries.map((entry) {
-                        return _buildHeaderCell(entry.value, entry.key);
+                        return _buildHeaderCell(entry.value, entry.key, widget.feedback);
                       }).toList(),
                     ),
                     Column(
