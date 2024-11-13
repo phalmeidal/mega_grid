@@ -12,7 +12,9 @@ class MegaGridStyle {
   final Border? border;
   final Color? borderColor;
   final double? borderWidth;
-
+  final Color? feedbackBgColor;
+  final Color? feedbackTextColor;
+  
   const MegaGridStyle({
     this.headerTextStyle,
     this.cellTextStyle,
@@ -25,5 +27,7 @@ class MegaGridStyle {
     this.border,
     this.borderColor,
     this.borderWidth,
+    this.feedbackBgColor,
+    this.feedbackTextColor,
   });
 }
