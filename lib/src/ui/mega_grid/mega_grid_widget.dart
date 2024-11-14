@@ -93,6 +93,7 @@ class MegaGridState extends State<MegaGrid> {
                           index: entry.key,
                           style: widget.style,
                           controller: columnController,
+                          feedback: widget.feedback,
                           setState: setState,
                         );
                       }).toList(),

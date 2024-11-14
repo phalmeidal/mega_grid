@@ -9,6 +9,7 @@ class HeaderCell extends StatelessWidget {
   final MegaGridStyle? style;
   final ColumnController controller;
   final Function(void Function()) setState;
+  final Widget Function(String text)? feedback;
 
   const HeaderCell({
     super.key,
@@ -17,6 +18,7 @@ class HeaderCell extends StatelessWidget {
     required this.style,
     required this.controller,
     required this.setState,
+    required this.feedback,
   });
 
   @override
@@ -40,24 +42,26 @@ class HeaderCell extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             child: Draggable<int>(
               data: index,
-              feedback: Material(
-                elevation: 4,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    column.title,
-                    style: style?.headerTextStyle?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+              feedback: feedback != null
+                  ? feedback!(column.title)
+                  : Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: style?.feedbackBgColor ?? Colors.grey.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          column.title,
+                          style: style?.headerTextStyle?.copyWith(
+                            color: style?.feedbackTextColor ?? Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
               child: DragTarget<int>(
                 onAcceptWithDetails: (draggedIndex) {
                   setState(() {
