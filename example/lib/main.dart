@@ -63,7 +63,6 @@ Widget Function(String) customFeedback = (String? value) {
       child: Row(children: [
         Text(value ?? ""),
         const Icon(Icons.query_stats),
-        // const Icon(Icons.drag_indicator),
       ]),
     ),
   );

@@ -90,12 +90,24 @@ class HeaderCell extends StatelessWidget {
                     });
                   },
                   builder: (context, candidateData, rejectedData) {
-                    return Text(
-                      column.title,
-                      style: style?.headerTextStyle,
-                      textAlign: column.titleTextAlign,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                    bool isDraggingOver = candidateData.isNotEmpty && candidateData.first != index;
+
+                    return Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: isDraggingOver ? Colors.blue.withOpacity(0.2) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(
+                          column.title,
+                          style: style?.headerTextStyle,
+                          textAlign: column.titleTextAlign,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
                     );
                   },
                 ),
