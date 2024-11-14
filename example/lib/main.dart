@@ -19,11 +19,11 @@ class MyApp extends StatelessWidget {
     ];
 
     final List<TableItem> items = [
-      {'company': 'Empresa 1', 'borrower': 'Pessoa 1', 'installment': 2, 'deadline': '01/01/2026', 'value': 1400.0},
-      {'company': 'Empresa 2', 'borrower': 'Pessoa 2', 'installment': 3, 'deadline': '01/02/2026', 'value': 1500.0},
-      {'company': 'Empresa 3', 'borrower': 'Pessoa 3', 'installment': 4, 'deadline': '01/03/2026', 'value': 1600.0},
-      {'company': 'Empresa 4', 'borrower': 'Pessoa 4', 'installment': 5, 'deadline': '01/04/2026', 'value': 1700.0},
-      {'company': 'Empresa 5', 'borrower': 'Pessoa 5', 'installment': 6, 'deadline': '01/05/2026', 'value': 1800.0},
+      {'company': 'Empresa 1', 'borrower': 'Pessoa 1', 'installment': 7, 'deadline': '15/09/2026', 'value': 1700.0},
+      {'company': 'Empresa 2', 'borrower': 'Pessoa 2', 'installment': 3, 'deadline': '30/02/2026', 'value': 5000.0},
+      {'company': 'Empresa 3', 'borrower': 'Pessoa 3', 'installment': 2, 'deadline': '01/01/2025', 'value': 3400.0},
+      {'company': 'Empresa 4', 'borrower': 'Pessoa 4', 'installment': 5, 'deadline': '01/04/2026', 'value': 7100.0},
+      {'company': 'Empresa 5', 'borrower': 'Pessoa 5', 'installment': 6, 'deadline': '07/05/2026', 'value': 1800.0},
     ];
 
     return MaterialApp(

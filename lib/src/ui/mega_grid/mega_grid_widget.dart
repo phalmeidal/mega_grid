@@ -33,6 +33,7 @@ class MegaGrid extends StatefulWidget {
 class MegaGridState extends State<MegaGrid> {
   late ColumnController columnController;
   late ScrollController _horizontalScrollController;
+  late List<TableItem> _sortedItems;
 
   @override
   void initState() {
@@ -42,6 +43,7 @@ class MegaGridState extends State<MegaGrid> {
       minColumnWidth: widget.minColumnWidth,
     );
     _horizontalScrollController = ScrollController();
+    _sortedItems = List.from(widget.items);
   }
 
   @override
@@ -54,6 +56,12 @@ class MegaGridState extends State<MegaGrid> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     columnController.initializeColumnWidths(context, widget.width);
+  }
+
+  void handleSort(int columnIndex) {
+    setState(() {
+      _sortedItems = columnController.sortItems(_sortedItems, columnIndex);
+    });
   }
 
   @override
@@ -100,7 +108,7 @@ class MegaGridState extends State<MegaGrid> {
                     ),
                     Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: widget.items.asMap().entries.map((itemEntry) {
+                      children: _sortedItems.asMap().entries.map((itemEntry) {
                         final rowIndex = itemEntry.key;
                         final item = itemEntry.value;
                         final isAlternate = rowIndex % 2 == 1;
