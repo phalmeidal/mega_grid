@@ -13,7 +13,10 @@ class MegaGrid extends StatefulWidget {
   final double? width;
   final double? height;
   final double minColumnWidth;
+  /// Customizable widget that provides visual feedback during the drag of a column to a receiver.
   final Widget Function(String text)? feedback;
+  /// Enables a background color on the receiver element to provide visual confirmation when dragging a column and placing it over the receiver.
+  final bool? enableColorReceiverDrag;
 
   const MegaGrid({
     super.key,
@@ -24,6 +27,7 @@ class MegaGrid extends StatefulWidget {
     this.height,
     this.minColumnWidth = 70.0,
     this.feedback,
+    this.enableColorReceiverDrag,
   });
 
   @override
@@ -101,6 +105,7 @@ class MegaGridState extends State<MegaGrid> {
                           index: entry.key,
                           style: widget.style,
                           controller: columnController,
+                          enableColorReceiverDrag: widget.enableColorReceiverDrag,
                           feedback: widget.feedback,
                           setState: setState,
                         );
