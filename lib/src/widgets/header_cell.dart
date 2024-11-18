@@ -9,6 +9,7 @@ class HeaderCell extends StatelessWidget {
   final MegaGridStyle? style;
   final ColumnController controller;
   final Function(void Function()) setState;
+  final bool? enableColorReceiverDrag;
   final Widget Function(String text)? feedback;
 
   const HeaderCell({
@@ -18,6 +19,7 @@ class HeaderCell extends StatelessWidget {
     required this.style,
     required this.controller,
     required this.setState,
+    this.enableColorReceiverDrag,
     required this.feedback,
   });
 
@@ -60,7 +62,7 @@ class HeaderCell extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
               child: Draggable<int>(
                 data: index,
                 feedback: feedback != null
@@ -90,12 +92,24 @@ class HeaderCell extends StatelessWidget {
                     });
                   },
                   builder: (context, candidateData, rejectedData) {
-                    return Text(
-                      column.title,
-                      style: style?.headerTextStyle,
-                      textAlign: column.titleTextAlign,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                    bool isDraggingOver = candidateData.isNotEmpty && candidateData.first != index && enableColorReceiverDrag != false;
+
+                    return Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: isDraggingOver ? style?.receiverDragColor ?? Colors.blue.withOpacity(0.2) : Colors.transparent,
+                        borderRadius: style?.receiverDragBorder ?? BorderRadius.zero,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(
+                          column.title,
+                          style: style?.headerTextStyle,
+                          textAlign: column.titleTextAlign,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
                     );
                   },
                 ),
