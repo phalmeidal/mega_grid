@@ -12,15 +12,22 @@ class MegaGridStyle {
   final Border? border;
   final Color? borderColor;
   final double? borderWidth;
+
   /// Sets the background color of the visual feedback during column drag.
   final Color? feedbackBgColor;
+
   /// Sets the text color of the visual feedback during column drag.
   final Color? feedbackTextColor;
+
   /// Sets the border radius of the receiver when it is active as a destination during column drag.
   final BorderRadius? receiverDragBorder;
+
   /// Sets the background color of the receiver to indicate when it is active as a destination during column drag.
   final Color? receiverDragColor;
-  
+
+  final Color? selectedRowColor;
+  final Color? selectedCellBorderColor;
+
   const MegaGridStyle({
     this.headerTextStyle,
     this.cellTextStyle,
@@ -37,5 +44,7 @@ class MegaGridStyle {
     this.feedbackTextColor,
     this.receiverDragBorder,
     this.receiverDragColor,
+    this.selectedRowColor,
+    this.selectedCellBorderColor,
   });
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mega_grid/mega_grid.dart';
 import 'package:mega_grid/src/controllers/column_controller.dart';
-import 'resize_handle.dart';
 
 class HeaderCell extends StatelessWidget {
   final MegaColumn column;
@@ -23,18 +22,105 @@ class HeaderCell extends StatelessWidget {
     required this.feedback,
   });
 
-  Widget _buildSortIcon() {
-    if (controller.sortColumnIndex != index) {
-      return ResizeHandle(
-        columnIndex: index,
-        controller: controller,
-        setState: setState,
-      );
-    }
+  Widget _buildSortIcon(context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      child: GestureDetector(
+        onPanStart: (details) {
+          setState(() {
+            controller.dragStartX = details.globalPosition.dx;
+            controller.resizingColumnIndex = index;
+          });
+        },
+        onPanUpdate: (details) {
+          if (controller.dragStartX != null && controller.resizingColumnIndex != null) {
+            final delta = details.globalPosition.dx - controller.dragStartX!;
+            setState(() {
+              controller.updateColumnWidth(controller.resizingColumnIndex!, delta);
+              controller.dragStartX = details.globalPosition.dx;
+            });
+          }
+        },
+        onPanEnd: (details) {
+          setState(() {
+            controller.dragStartX = null;
+            controller.resizingColumnIndex = null;
+          });
+        },
+        onTapUp: (details) {
+          _showColumnMenu(context);
+        },
+        child: Icon(
+          controller.sortColumnIndex == index ? (controller.isAscending ? Icons.arrow_downward : Icons.arrow_upward) : Icons.drag_handle,
+          size: 16,
+        ),
+      ),
+    );
+  }
 
-    return Icon(
-      controller.isAscending ? Icons.arrow_downward : Icons.arrow_upward,
-      size: 16,
+  void _showColumnMenu(BuildContext context) {
+    final RenderBox button = context.findRenderObject() as RenderBox;
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(button.size.topRight(Offset.zero), ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    showMenu(
+      context: context,
+      position: position,
+      color: Colors.white,
+      items: [
+        if (!controller.isColumnFrozen(index))
+          PopupMenuItem(
+            value: 'freezeStart',
+            child: const Text('Freeze at start'),
+            onTap: () {
+              setState(() {
+                controller.freezeColumnAtStart(index);
+              });
+            },
+          ),
+        if (!controller.isColumnFrozen(index))
+          PopupMenuItem(
+            value: 'freezeEnd',
+            child: const Text('Freeze at end'),
+            onTap: () {
+              setState(() {
+                controller.freezeColumnAtEnd(index);
+              });
+            },
+          ),
+        if (controller.isColumnFrozen(index))
+          PopupMenuItem(
+            value: 'unfreeze',
+            child: const Text('Unfreeze'),
+            onTap: () {
+              setState(() {
+                controller.unfreezeColumn(index);
+              });
+            },
+          ),
+        PopupMenuItem(
+          value: 'adjust',
+          child: const Text('Adjust'),
+          onTap: () {
+            setState(() {
+              controller.adjustColumnWidth(index, context);
+            });
+          },
+        ),
+        PopupMenuItem(
+          value: 'showColumns',
+          child: const Text('Show columns'),
+          onTap: () {
+            controller.showColumnsDialog(context, () => setState(() {}));
+          },
+        ),
+      ],
     );
   }
 
@@ -119,7 +205,7 @@ class HeaderCell extends StatelessWidget {
               right: 0,
               top: 0,
               bottom: 0,
-              child: _buildSortIcon(),
+              child: _buildSortIcon(context),
             ),
           ],
         ),

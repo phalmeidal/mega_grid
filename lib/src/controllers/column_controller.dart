@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mega_grid/src/widgets/column_visibility_dialog.dart';
 import '../../mega_grid.dart';
 
 class ColumnController {
@@ -13,6 +14,10 @@ class ColumnController {
   int? sortColumnIndex;
   bool isAscending = true;
   List<TableItem> originalItems = [];
+
+  final Set<int> frozenStartColumns = {};
+  final Set<int> frozenEndColumns = {};
+  final Set<int> hiddenColumns = {};
 
   ColumnController({
     required this.columns,
@@ -37,6 +42,12 @@ class ColumnController {
     final tempWidth = columnWidths[index1] ?? 100.0;
     columnWidths[index1] = columnWidths[index2] ?? 100.0;
     columnWidths[index2] = tempWidth;
+
+    if (sortColumnIndex == index1) {
+      sortColumnIndex = index2;
+    } else if (sortColumnIndex == index2) {
+      sortColumnIndex = index1;
+    }
   }
 
   void updateColumnWidth(int columnIndex, double delta) {
@@ -111,5 +122,77 @@ class ColumnController {
       return null;
     }
     return null;
+  }
+
+  void freezeColumnAtStart(int columnIndex) {
+    frozenStartColumns.add(columnIndex);
+    frozenEndColumns.remove(columnIndex);
+  }
+
+  void freezeColumnAtEnd(int columnIndex) {
+    frozenEndColumns.add(columnIndex);
+    frozenStartColumns.remove(columnIndex);
+  }
+
+  void unfreezeColumn(int columnIndex) {
+    frozenStartColumns.remove(columnIndex);
+    frozenEndColumns.remove(columnIndex);
+  }
+
+  bool isColumnFrozen(int columnIndex) {
+    return frozenStartColumns.contains(columnIndex) || frozenEndColumns.contains(columnIndex);
+  }
+
+  void adjustColumnWidth(int columnIndex, BuildContext context) {
+    double maxWidth = 0;
+
+    final TextPainter headerPainter = TextPainter(
+      text: TextSpan(
+        text: columns[columnIndex].title,
+        style: DefaultTextStyle.of(context).style,
+      ),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    maxWidth = headerPainter.width + 40;
+
+    columnWidths[columnIndex] = maxWidth.clamp(minColumnWidth, maxColumnWidth);
+  }
+
+  void toggleColumnVisibility(int columnIndex) {
+    if (hiddenColumns.contains(columnIndex)) {
+      hiddenColumns.remove(columnIndex);
+    } else {
+      hiddenColumns.add(columnIndex);
+    }
+  }
+
+  bool isColumnVisible(int columnIndex) {
+    return !hiddenColumns.contains(columnIndex);
+  }
+
+  void setAllColumnsVisibility(bool visible) {
+    if (visible) {
+      hiddenColumns.clear();
+    } else {
+      hiddenColumns.addAll(
+        columns.asMap().entries.where((e) => e.value.canHide).map((e) => e.key),
+      );
+    }
+  }
+
+  void showColumnsDialog(BuildContext context, VoidCallback onVisibilityChanged) {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => ColumnVisibilityDialog(
+            controller: this,
+            onVisibilityChanged: onVisibilityChanged,
+          ),
+        );
+      }
+    });
   }
 }
