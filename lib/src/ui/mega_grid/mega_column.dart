@@ -7,6 +7,7 @@ class MegaColumn {
   final TextAlign cellTextAlign;
   final bool isEditable;
   final double? minWidth;
+  final bool canHide;
 
   const MegaColumn({
     required this.title,
@@ -15,5 +16,6 @@ class MegaColumn {
     this.cellTextAlign = TextAlign.left,
     this.isEditable = false,
     this.minWidth,
+    this.canHide = true,
   });
 }

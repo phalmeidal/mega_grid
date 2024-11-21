@@ -11,11 +11,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final columns = [
-      const MegaColumn(title: 'Empresa', field: 'company'),
+      const MegaColumn(title: 'Empresa', field: 'company', canHide: false),
       const MegaColumn(title: 'Tomador', field: 'borrower'),
       const MegaColumn(title: 'Parcela', field: 'installment'),
       const MegaColumn(title: 'Vencimento', field: 'deadline'),
-      const MegaColumn(title: 'Valor', field: 'value'),
+      const MegaColumn(title: 'Valor', field: 'value', canHide: false),
     ];
 
     final List<TableItem> items = [
