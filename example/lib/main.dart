@@ -58,7 +58,7 @@ class _MyAppState extends State<MyApp> {
               onTap();
             });
           },
-          initialRowLimit: 2,
+          initialRowLimit: 5,
           increaseRowLimit: 2,
           style: MegaGridStyle(
             headerTextStyle: const TextStyle(fontWeight: FontWeight.bold),
