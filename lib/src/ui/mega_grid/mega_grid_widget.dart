@@ -162,6 +162,7 @@ class MegaGridState extends State<MegaGrid> {
                     feedback: widget.feedback,
                     enableColorReceiverDrag: widget.enableColorReceiverDrag,
                     setState: setState,
+                    scrollController: _horizontalScrollController, // Add this line
                   ),
                 ),
                 if (frozenEndColumns.isNotEmpty)
@@ -258,13 +259,24 @@ class FrozenColumns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if any of the columns are frozen at the end
+    bool isFrozenEnd = columns.any((entry) => columnController.frozenEndColumns.contains(entry.key));
+
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          right: BorderSide(
-            color: Colors.grey[300]!,
-            width: 2,
-          ),
+          right: !isFrozenEnd
+              ? BorderSide(
+                  color: Colors.grey[300]!,
+                  width: 2,
+                )
+              : BorderSide.none,
+          left: isFrozenEnd
+              ? BorderSide(
+                  color: Colors.grey[300]!,
+                  width: 2,
+                )
+              : BorderSide.none,
         ),
       ),
       child: Column(
@@ -324,6 +336,7 @@ class ScrollableColumns extends StatelessWidget {
   final Widget Function(String text)? feedback;
   final bool? enableColorReceiverDrag;
   final Function(void Function()) setState;
+  final ScrollController scrollController;
 
   const ScrollableColumns({
     super.key,
@@ -335,12 +348,15 @@ class ScrollableColumns extends StatelessWidget {
     required this.feedback,
     required this.enableColorReceiverDrag,
     required this.setState,
+    required this.scrollController,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scrollbar(
+      controller: scrollController,
       child: SingleChildScrollView(
+        controller: scrollController,
         scrollDirection: Axis.horizontal,
         child: Row(
           children: columns.map((entry) {

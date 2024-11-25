@@ -130,14 +130,40 @@ class ColumnController {
     return null;
   }
 
+  bool canFreezeColumnAtStart(int columnIndex) {
+    // Count how many columns would be frozen if this column was frozen
+    int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
+    if (!frozenStartColumns.contains(columnIndex)) {
+      potentialFrozenCount++;
+    }
+
+    // Check if freezing this column would leave at least one unfrozen column
+    return potentialFrozenCount < columns.length - 1;
+  }
+
+  bool canFreezeColumnAtEnd(int columnIndex) {
+    // Count how many columns would be frozen if this column was frozen
+    int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
+    if (!frozenEndColumns.contains(columnIndex)) {
+      potentialFrozenCount++;
+    }
+
+    // Check if freezing this column would leave at least one unfrozen column
+    return potentialFrozenCount < columns.length - 1;
+  }
+
   void freezeColumnAtStart(int columnIndex) {
-    frozenStartColumns.add(columnIndex);
-    frozenEndColumns.remove(columnIndex);
+    if (canFreezeColumnAtStart(columnIndex)) {
+      frozenStartColumns.add(columnIndex);
+      frozenEndColumns.remove(columnIndex);
+    }
   }
 
   void freezeColumnAtEnd(int columnIndex) {
-    frozenEndColumns.add(columnIndex);
-    frozenStartColumns.remove(columnIndex);
+    if (canFreezeColumnAtEnd(columnIndex)) {
+      frozenEndColumns.add(columnIndex);
+      frozenStartColumns.remove(columnIndex);
+    }
   }
 
   void unfreezeColumn(int columnIndex) {
