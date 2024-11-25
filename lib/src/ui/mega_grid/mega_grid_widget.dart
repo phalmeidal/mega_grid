@@ -162,7 +162,7 @@ class MegaGridState extends State<MegaGrid> {
                     feedback: widget.feedback,
                     enableColorReceiverDrag: widget.enableColorReceiverDrag,
                     setState: setState,
-                    scrollController: _horizontalScrollController, // Add this line
+                    scrollController: _horizontalScrollController,
                   ),
                 ),
                 if (frozenEndColumns.isNotEmpty)
