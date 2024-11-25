@@ -259,7 +259,6 @@ class FrozenColumns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check if any of the columns are frozen at the end
     bool isFrozenEnd = columns.any((entry) => columnController.frozenEndColumns.contains(entry.key));
 
     return Container(

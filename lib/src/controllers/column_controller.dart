@@ -131,24 +131,20 @@ class ColumnController {
   }
 
   bool canFreezeColumnAtStart(int columnIndex) {
-    // Count how many columns would be frozen if this column was frozen
     int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
     if (!frozenStartColumns.contains(columnIndex)) {
       potentialFrozenCount++;
     }
 
-    // Check if freezing this column would leave at least one unfrozen column
     return potentialFrozenCount < columns.length - 1;
   }
 
   bool canFreezeColumnAtEnd(int columnIndex) {
-    // Count how many columns would be frozen if this column was frozen
     int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
     if (!frozenEndColumns.contains(columnIndex)) {
       potentialFrozenCount++;
     }
 
-    // Check if freezing this column would leave at least one unfrozen column
     return potentialFrozenCount < columns.length - 1;
   }
 
