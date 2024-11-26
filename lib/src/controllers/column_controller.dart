@@ -131,21 +131,33 @@ class ColumnController {
   }
 
   bool canFreezeColumnAtStart(int columnIndex) {
+    int visibleColumnsCount = columns.length - hiddenColumns.length;
+
+    if (visibleColumnsCount <= 1) return false;
+
+    if (visibleColumnsCount == 2 && (frozenStartColumns.length + frozenEndColumns.length) >= 1) {
+      return false;
+    }
     int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
     if (!frozenStartColumns.contains(columnIndex)) {
       potentialFrozenCount++;
     }
-
-    return potentialFrozenCount < columns.length - 1;
+    return potentialFrozenCount < visibleColumnsCount;
   }
 
   bool canFreezeColumnAtEnd(int columnIndex) {
+    int visibleColumnsCount = columns.length - hiddenColumns.length;
+
+    if (visibleColumnsCount <= 1) return false;
+
+    if (visibleColumnsCount == 2 && (frozenStartColumns.length + frozenEndColumns.length) >= 1) {
+      return false;
+    }
     int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
     if (!frozenEndColumns.contains(columnIndex)) {
       potentialFrozenCount++;
     }
-
-    return potentialFrozenCount < columns.length - 1;
+    return potentialFrozenCount < visibleColumnsCount;
   }
 
   void freezeColumnAtStart(int columnIndex) {
