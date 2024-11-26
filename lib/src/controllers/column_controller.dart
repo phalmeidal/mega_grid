@@ -19,6 +19,8 @@ class ColumnController {
   final Set<int> frozenEndColumns = {};
   final Set<int> hiddenColumns = {};
 
+  final double maxFrozenColumnsWidthPercentage = 0.5;
+
   ColumnController({
     required this.columns,
     this.minColumnWidth = 70.0,
@@ -50,9 +52,24 @@ class ColumnController {
     }
   }
 
-  void updateColumnWidth(int columnIndex, double delta) {
+  void updateColumnWidth(int columnIndex, double delta, double totalWidth) {
     final newWidth = (columnWidths[columnIndex] ?? 100.0) + delta;
-    columnWidths[columnIndex] = newWidth.clamp(minColumnWidth, maxColumnWidth);
+    final clampedWidth = newWidth.clamp(minColumnWidth, maxColumnWidth);
+
+    double frozenStartWidth = 0;
+    double frozenEndWidth = 0;
+
+    for (var index in frozenStartColumns) {
+      frozenStartWidth += columnWidths[index] ?? minColumnWidth;
+    }
+
+    for (var index in frozenEndColumns) {
+      frozenEndWidth += columnWidths[index] ?? minColumnWidth;
+    }
+
+    if (delta < 0 || frozenStartWidth + frozenEndWidth + clampedWidth <= totalWidth) {
+      columnWidths[columnIndex] = clampedWidth;
+    }
   }
 
   List<TableItem> sortItems(List<TableItem> items, int columnIndex, int visibleRows, bool isIncreaseRow) {
@@ -130,7 +147,7 @@ class ColumnController {
     return null;
   }
 
-  bool canFreezeColumn(int columnIndex) {
+  bool canFreezeColumn(int columnIndex, double totalWidth) {
     int visibleColumnsCount = columns.length - hiddenColumns.length;
 
     if (visibleColumnsCount <= 1) return false;
@@ -138,22 +155,42 @@ class ColumnController {
     if (visibleColumnsCount == 2 && (frozenStartColumns.length + frozenEndColumns.length) >= 1) {
       return false;
     }
+
+    double frozenStartWidth = 0;
+    double frozenEndWidth = 0;
+
+    for (var index in frozenStartColumns) {
+      frozenStartWidth += columnWidths[index] ?? minColumnWidth;
+    }
+
+    for (var index in frozenEndColumns) {
+      frozenEndWidth += columnWidths[index] ?? minColumnWidth;
+    }
+
+    double currentFrozenWidth = frozenStartWidth + frozenEndWidth;
+    double newColumnWidth = columnWidths[columnIndex] ?? minColumnWidth;
+
+    if ((currentFrozenWidth + newColumnWidth) / totalWidth > maxFrozenColumnsWidthPercentage) {
+      return false;
+    }
+
     int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
     if (!frozenStartColumns.contains(columnIndex) && !frozenEndColumns.contains(columnIndex)) {
       potentialFrozenCount++;
     }
+
     return potentialFrozenCount < visibleColumnsCount;
   }
 
-  void freezeColumnAtStart(int columnIndex) {
-    if (canFreezeColumn(columnIndex)) {
+  void freezeColumnAtStart(int columnIndex, double totalWidth) {
+    if (canFreezeColumn(columnIndex, totalWidth)) {
       frozenStartColumns.add(columnIndex);
       frozenEndColumns.remove(columnIndex);
     }
   }
 
-  void freezeColumnAtEnd(int columnIndex) {
-    if (canFreezeColumn(columnIndex)) {
+  void freezeColumnAtEnd(int columnIndex, double totalWidth) {
+    if (canFreezeColumn(columnIndex, totalWidth)) {
       frozenEndColumns.add(columnIndex);
       frozenStartColumns.remove(columnIndex);
     }

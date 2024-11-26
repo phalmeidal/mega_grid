@@ -35,8 +35,9 @@ class HeaderCell extends StatelessWidget {
         onPanUpdate: (details) {
           if (controller.dragStartX != null && controller.resizingColumnIndex != null) {
             final delta = details.globalPosition.dx - controller.dragStartX!;
+            final totalWidth = MediaQuery.of(context).size.width;
             setState(() {
-              controller.updateColumnWidth(controller.resizingColumnIndex!, delta);
+              controller.updateColumnWidth(controller.resizingColumnIndex!, delta, totalWidth);
               controller.dragStartX = details.globalPosition.dx;
             });
           }
@@ -69,6 +70,8 @@ class HeaderCell extends StatelessWidget {
       Offset.zero & overlay.size,
     );
 
+    double totalWidth = MediaQuery.of(context).size.width;
+
     showMenu(
       context: context,
       position: position,
@@ -77,10 +80,10 @@ class HeaderCell extends StatelessWidget {
         if (!controller.isColumnFrozen(index))
           PopupMenuItem(
             value: 'freezeStart',
-            enabled: controller.canFreezeColumn(index),
+            enabled: controller.canFreezeColumn(index, totalWidth),
             onTap: () {
               setState(() {
-                controller.freezeColumnAtStart(index);
+                controller.freezeColumnAtStart(index, totalWidth);
               });
             },
             child: const Text('Freeze at start'),
@@ -88,11 +91,11 @@ class HeaderCell extends StatelessWidget {
         if (!controller.isColumnFrozen(index))
           PopupMenuItem(
             value: 'freezeEnd',
-            enabled: controller.canFreezeColumn(index),
+            enabled: controller.canFreezeColumn(index, totalWidth),
             child: const Text('Freeze at end'),
             onTap: () {
               setState(() {
-                controller.freezeColumnAtEnd(index);
+                controller.freezeColumnAtEnd(index, totalWidth);
               });
             },
           ),
