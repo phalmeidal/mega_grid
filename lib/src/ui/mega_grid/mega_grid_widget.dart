@@ -15,8 +15,22 @@ class MegaGrid extends StatefulWidget {
   final double? width;
   final double? height;
   final double minColumnWidth;
+
+  /// Customizable widget that provides visual feedback during the drag of a column to a receiver.
   final Widget Function(String text)? feedback;
+
+  /// Enables a background color on the receiver element to provide visual confirmation when dragging a column and placing it over the receiver.
   final bool? enableColorReceiverDrag;
+
+  /// The initial number of rows to display in the table.
+  final int? initialRowLimit;
+
+  /// The number of additional rows to display when the "Load More" action is triggered.
+  final int? increaseRowLimit;
+  final IconData? loadMoreIcon;
+
+  /// Customizable widget that displays a button or control to increase visible rows.
+  final Widget Function(VoidCallback)? customIncreaseRow;
 
   const MegaGrid({
     super.key,
@@ -28,6 +42,10 @@ class MegaGrid extends StatefulWidget {
     this.minColumnWidth = 70.0,
     this.feedback,
     this.enableColorReceiverDrag,
+    this.initialRowLimit,
+    this.increaseRowLimit,
+    this.loadMoreIcon,
+    this.customIncreaseRow,
   });
 
   @override
@@ -40,6 +58,7 @@ class MegaGridState extends State<MegaGrid> {
   late ScrollController _horizontalScrollController;
   late List<TableItem> _sortedItems;
   late FocusNode _gridFocusNode;
+  int _visibleRows = 0;
 
   @override
   void initState() {
@@ -52,6 +71,7 @@ class MegaGridState extends State<MegaGrid> {
     _horizontalScrollController = ScrollController();
     _sortedItems = List.from(widget.items);
     _gridFocusNode = FocusNode();
+    _visibleRows = widget.initialRowLimit ?? _sortedItems.length;
   }
 
   @override
@@ -68,10 +88,17 @@ class MegaGridState extends State<MegaGrid> {
   }
 
   void handleSort(int columnIndex) {
-    setState(() {
-      selectionController.clearSelection();
-      _sortedItems = columnController.sortItems(_sortedItems, columnIndex);
-    });
+    setState(
+      () {
+        selectionController.clearSelection();
+
+        if (_visibleRows > _sortedItems.length) {
+          _visibleRows = _sortedItems.length;
+        }
+        
+        _sortedItems = columnController.sortItems(_sortedItems, columnIndex, _visibleRows, false);
+      },
+    );
   }
 
   void _handleKeyEvent(KeyEvent event) {
@@ -99,7 +126,7 @@ class MegaGridState extends State<MegaGrid> {
     final frozenEndColumns = columnController.columns.asMap().entries.where((e) => columnController.frozenEndColumns.contains(e.key) && columnController.isColumnVisible(e.key)).toList();
     final scrollableColumns = columnController.columns.asMap().entries.where((e) => !columnController.isColumnFrozen(e.key) && columnController.isColumnVisible(e.key)).toList();
 
-    Widget content = KeyboardListener(
+    Widget tableContent = KeyboardListener(
       focusNode: _gridFocusNode,
       onKeyEvent: _handleKeyEvent,
       child: GestureDetector(
@@ -117,7 +144,7 @@ class MegaGridState extends State<MegaGrid> {
                 if (frozenStartColumns.isNotEmpty)
                   FrozenColumns(
                     columns: frozenStartColumns,
-                    sortedItems: _sortedItems,
+                    sortedItems: _sortedItems.take(_visibleRows).toList(),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -128,7 +155,7 @@ class MegaGridState extends State<MegaGrid> {
                 Expanded(
                   child: ScrollableColumns(
                     columns: scrollableColumns,
-                    sortedItems: _sortedItems,
+                    sortedItems: _sortedItems.take(_visibleRows).toList(),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -140,7 +167,7 @@ class MegaGridState extends State<MegaGrid> {
                 if (frozenEndColumns.isNotEmpty)
                   FrozenColumns(
                     columns: frozenEndColumns,
-                    sortedItems: _sortedItems,
+                    sortedItems: _sortedItems.take(_visibleRows).toList(),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -154,7 +181,56 @@ class MegaGridState extends State<MegaGrid> {
         ),
       ),
     );
-    return widget.height != null ? SizedBox(height: widget.height, child: content) : content;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: Column(
+        children: [
+          tableContent,
+          if (_visibleRows < _sortedItems.length)
+            widget.customIncreaseRow != null
+                ? widget.customIncreaseRow!(
+                    () {
+                      setState(
+                        () {
+                          _visibleRows += widget.increaseRowLimit ?? 3;
+
+                          if (_visibleRows > _sortedItems.length) {
+                            _visibleRows = _sortedItems.length;
+                          }
+
+                          if (columnController.sortColumnIndex != null) {
+                            _sortedItems = columnController.sortItems(widget.items, columnController.sortColumnIndex!, _visibleRows, true);
+                          }
+                        },
+                      );
+                    },
+                  )
+                : IconButton(
+                    iconSize: 30,
+                    onPressed: () {
+                      setState(
+                        () {
+                          _visibleRows += widget.increaseRowLimit ?? 3;
+
+                          if (_visibleRows > _sortedItems.length) {
+                            _visibleRows = _sortedItems.length;
+                          }
+
+                          if (columnController.sortColumnIndex != null) {
+                            _sortedItems = columnController.sortItems(widget.items, columnController.sortColumnIndex!, _visibleRows, true);
+                          }
+                        },
+                      );
+                    },
+                    icon: Icon(
+                      widget.loadMoreIcon ?? Icons.add_circle_sharp,
+                      color: Colors.black,
+                    ),
+                  ),
+        ],
+      ),
+    );
   }
 }
 

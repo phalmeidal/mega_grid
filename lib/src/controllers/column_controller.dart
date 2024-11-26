@@ -55,9 +55,14 @@ class ColumnController {
     columnWidths[columnIndex] = newWidth.clamp(minColumnWidth, maxColumnWidth);
   }
 
-  List<TableItem> sortItems(List<TableItem> items, int columnIndex) {
+  List<TableItem> sortItems(List<TableItem> items, int columnIndex, int visibleRows, bool isIncreaseRow) {
     if (originalItems.isEmpty) {
       originalItems = List.from(items);
+    }
+
+    if (isIncreaseRow) {
+      sortColumnIndex = null;
+      return List.from(originalItems).cast<TableItem>();
     }
 
     if (sortColumnIndex == columnIndex) {
@@ -66,7 +71,7 @@ class ColumnController {
       } else {
         sortColumnIndex = null;
         isAscending = true;
-        return List.from(originalItems);
+        return List.from(originalItems).cast<TableItem>();
       }
     } else {
       sortColumnIndex = columnIndex;
@@ -74,7 +79,7 @@ class ColumnController {
     }
 
     final field = columns[columnIndex].field;
-    final sortedItems = List.from(items);
+    final sortedItems = List.from(items.take(visibleRows)).cast<TableItem>();
 
     final dateRegex = RegExp(r'^(\d{2})/(\d{2})/(\d{4})$');
 
@@ -106,7 +111,8 @@ class ColumnController {
       return isAscending ? comparison : -comparison;
     });
 
-    return sortedItems.cast<TableItem>();
+    final remainingItems = items.skip(visibleRows).toList().cast<TableItem>();
+    return sortedItems + remainingItems;
   }
 
   DateTime? _parseDate(String dateStr) {
