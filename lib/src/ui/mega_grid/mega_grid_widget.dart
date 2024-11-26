@@ -88,10 +88,17 @@ class MegaGridState extends State<MegaGrid> {
   }
 
   void handleSort(int columnIndex) {
-    setState(() {
-      selectionController.clearSelection();
-      _sortedItems = columnController.sortItems(_sortedItems, columnIndex);
-    });
+    setState(
+      () {
+        selectionController.clearSelection();
+
+        if (_visibleRows > _sortedItems.length) {
+          _visibleRows = _sortedItems.length;
+        }
+        
+        _sortedItems = columnController.sortItems(_sortedItems, columnIndex, _visibleRows, false);
+      },
+    );
   }
 
   void _handleKeyEvent(KeyEvent event) {
@@ -137,7 +144,7 @@ class MegaGridState extends State<MegaGrid> {
                 if (frozenStartColumns.isNotEmpty)
                   FrozenColumns(
                     columns: frozenStartColumns,
-                    sortedItems: _sortedItems,
+                    sortedItems: _sortedItems.take(_visibleRows).toList(),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -184,23 +191,37 @@ class MegaGridState extends State<MegaGrid> {
             widget.customIncreaseRow != null
                 ? widget.customIncreaseRow!(
                     () {
-                      setState(() {
-                        _visibleRows += widget.increaseRowLimit ?? 3;
-                        if (_visibleRows > _sortedItems.length) {
-                          _visibleRows = _sortedItems.length;
-                        }
-                      });
+                      setState(
+                        () {
+                          _visibleRows += widget.increaseRowLimit ?? 3;
+
+                          if (_visibleRows > _sortedItems.length) {
+                            _visibleRows = _sortedItems.length;
+                          }
+
+                          if (columnController.sortColumnIndex != null) {
+                            _sortedItems = columnController.sortItems(widget.items, columnController.sortColumnIndex!, _visibleRows, true);
+                          }
+                        },
+                      );
                     },
                   )
                 : IconButton(
                     iconSize: 30,
                     onPressed: () {
-                      setState(() {
-                        _visibleRows += widget.increaseRowLimit ?? 3;
-                        if (_visibleRows > _sortedItems.length) {
-                          _visibleRows = _sortedItems.length;
-                        }
-                      });
+                      setState(
+                        () {
+                          _visibleRows += widget.increaseRowLimit ?? 3;
+
+                          if (_visibleRows > _sortedItems.length) {
+                            _visibleRows = _sortedItems.length;
+                          }
+
+                          if (columnController.sortColumnIndex != null) {
+                            _sortedItems = columnController.sortItems(widget.items, columnController.sortColumnIndex!, _visibleRows, true);
+                          }
+                        },
+                      );
                     },
                     icon: Icon(
                       widget.loadMoreIcon ?? Icons.add_circle_sharp,
