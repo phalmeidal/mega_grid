@@ -130,7 +130,7 @@ class ColumnController {
     return null;
   }
 
-  bool canFreezeColumnAtStart(int columnIndex) {
+  bool canFreezeColumn(int columnIndex) {
     int visibleColumnsCount = columns.length - hiddenColumns.length;
 
     if (visibleColumnsCount <= 1) return false;
@@ -139,36 +139,21 @@ class ColumnController {
       return false;
     }
     int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
-    if (!frozenStartColumns.contains(columnIndex)) {
-      potentialFrozenCount++;
-    }
-    return potentialFrozenCount < visibleColumnsCount;
-  }
-
-  bool canFreezeColumnAtEnd(int columnIndex) {
-    int visibleColumnsCount = columns.length - hiddenColumns.length;
-
-    if (visibleColumnsCount <= 1) return false;
-
-    if (visibleColumnsCount == 2 && (frozenStartColumns.length + frozenEndColumns.length) >= 1) {
-      return false;
-    }
-    int potentialFrozenCount = frozenStartColumns.length + frozenEndColumns.length;
-    if (!frozenEndColumns.contains(columnIndex)) {
+    if (!frozenStartColumns.contains(columnIndex) && !frozenEndColumns.contains(columnIndex)) {
       potentialFrozenCount++;
     }
     return potentialFrozenCount < visibleColumnsCount;
   }
 
   void freezeColumnAtStart(int columnIndex) {
-    if (canFreezeColumnAtStart(columnIndex)) {
+    if (canFreezeColumn(columnIndex)) {
       frozenStartColumns.add(columnIndex);
       frozenEndColumns.remove(columnIndex);
     }
   }
 
   void freezeColumnAtEnd(int columnIndex) {
-    if (canFreezeColumnAtEnd(columnIndex)) {
+    if (canFreezeColumn(columnIndex)) {
       frozenEndColumns.add(columnIndex);
       frozenStartColumns.remove(columnIndex);
     }

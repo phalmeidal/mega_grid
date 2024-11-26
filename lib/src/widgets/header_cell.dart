@@ -77,7 +77,7 @@ class HeaderCell extends StatelessWidget {
         if (!controller.isColumnFrozen(index))
           PopupMenuItem(
             value: 'freezeStart',
-            enabled: controller.canFreezeColumnAtStart(index),
+            enabled: controller.canFreezeColumn(index),
             onTap: () {
               setState(() {
                 controller.freezeColumnAtStart(index);
@@ -88,7 +88,7 @@ class HeaderCell extends StatelessWidget {
         if (!controller.isColumnFrozen(index))
           PopupMenuItem(
             value: 'freezeEnd',
-            enabled: controller.canFreezeColumnAtEnd(index),
+            enabled: controller.canFreezeColumn(index),
             child: const Text('Freeze at end'),
             onTap: () {
               setState(() {
