@@ -24,7 +24,7 @@ class ColumnController {
   ColumnController({
     required this.columns,
     this.minColumnWidth = 70.0,
-    this.maxColumnWidth = 500.0,
+    this.maxColumnWidth = 1000.0,
   });
 
   void initializeColumnWidths(BuildContext context, double? definedWidth) {
@@ -227,6 +227,8 @@ class ColumnController {
       hiddenColumns.remove(columnIndex);
     } else {
       hiddenColumns.add(columnIndex);
+      frozenStartColumns.remove(columnIndex);
+      frozenEndColumns.remove(columnIndex);
     }
   }
 
