@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mega_grid/src/controllers/selection_controller.dart';
@@ -31,6 +32,7 @@ class MegaGrid extends StatefulWidget {
 
   /// Customizable widget that displays a button or control to increase visible rows.
   final Widget Function(VoidCallback)? customIncreaseRow;
+  final bool isInfinityLoading;
 
   const MegaGrid({
     super.key,
@@ -46,6 +48,7 @@ class MegaGrid extends StatefulWidget {
     this.increaseRowLimit,
     this.loadMoreIcon,
     this.customIncreaseRow,
+    this.isInfinityLoading = true,
   });
 
   @override
@@ -56,6 +59,7 @@ class MegaGridState extends State<MegaGrid> {
   late ColumnController columnController;
   late SelectionController selectionController;
   late ScrollController _horizontalScrollController;
+  late ScrollController _verticalScrollController;
   late List<TableItem> _sortedItems;
   late FocusNode _gridFocusNode;
   int _visibleRows = 0;
@@ -69,14 +73,27 @@ class MegaGridState extends State<MegaGrid> {
     );
     selectionController = SelectionController();
     _horizontalScrollController = ScrollController();
+    _verticalScrollController = ScrollController();
     _sortedItems = List.from(widget.items);
     _gridFocusNode = FocusNode();
     _visibleRows = widget.initialRowLimit ?? _sortedItems.length;
+
+    if (widget.isInfinityLoading) {
+      if (widget.initialRowLimit == null) _visibleRows = 0;
+
+      _verticalScrollController.addListener(() {
+        if (_verticalScrollController.position.pixels >= _verticalScrollController.position.maxScrollExtent - 10 && _visibleRows < widget.items.length) {
+          _loadMoreItems();
+        }
+      });
+      _checkAndLoadMoreItems();
+    }
   }
 
   @override
   void dispose() {
     _horizontalScrollController.dispose();
+    _verticalScrollController.dispose();
     _gridFocusNode.dispose();
     super.dispose();
   }
@@ -88,17 +105,13 @@ class MegaGridState extends State<MegaGrid> {
   }
 
   void handleSort(int columnIndex) {
-    setState(
-      () {
-        selectionController.clearSelection();
+    setState(() {
+      selectionController.clearSelection();
 
-        if (_visibleRows > _sortedItems.length) {
-          _visibleRows = _sortedItems.length;
-        }
-        
-        _sortedItems = columnController.sortItems(_sortedItems, columnIndex, _visibleRows, false);
-      },
-    );
+      if (_visibleRows > _sortedItems.length) _visibleRows = _sortedItems.length;
+
+      _sortedItems = columnController.sortItems(_sortedItems, columnIndex, _visibleRows, false);
+    });
   }
 
   void _handleKeyEvent(KeyEvent event) {
@@ -115,6 +128,30 @@ class MegaGridState extends State<MegaGrid> {
       final column = columnController.columns[selectionController.selectedColumnIndex!];
       final value = item[column.field].toString();
       Clipboard.setData(ClipboardData(text: value));
+    }
+  }
+
+  void _checkAndLoadMoreItems() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_verticalScrollController.position.maxScrollExtent == 0 && _visibleRows < widget.items.length) {
+        _loadMoreItems();
+        _checkAndLoadMoreItems();
+      }
+    });
+  }
+
+  void _loadMoreItems() {
+    final increment = widget.increaseRowLimit ?? 10;
+    final remainingItems = widget.items.length - _visibleRows;
+
+    if (columnController.sortColumnIndex != null) {
+      _sortedItems = columnController.sortItems(widget.items, columnController.sortColumnIndex!, _visibleRows, true);
+    }
+
+    if (remainingItems > 0) {
+      setState(() {
+        _visibleRows += min(increment, remainingItems);
+      });
     }
   }
 
@@ -144,7 +181,8 @@ class MegaGridState extends State<MegaGrid> {
                 if (frozenStartColumns.isNotEmpty)
                   FrozenColumns(
                     columns: frozenStartColumns,
-                    sortedItems: _sortedItems.take(_visibleRows).toList(),
+                    // sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                    sortedItems: _sortedItems.sublist(0, _visibleRows),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -155,7 +193,8 @@ class MegaGridState extends State<MegaGrid> {
                 Expanded(
                   child: ScrollableColumns(
                     columns: scrollableColumns,
-                    sortedItems: _sortedItems.take(_visibleRows).toList(),
+                    sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                    // sortedItems: _sortedItems.sublist(0, _visibleRows),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -168,7 +207,7 @@ class MegaGridState extends State<MegaGrid> {
                 if (frozenEndColumns.isNotEmpty)
                   FrozenColumns(
                     columns: frozenEndColumns,
-                    sortedItems: _sortedItems.take(_visibleRows).toList(),
+                    sortedItems: _sortedItems.sublist(0, _visibleRows),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -184,52 +223,30 @@ class MegaGridState extends State<MegaGrid> {
     );
 
     return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: Column(
-        children: [
-          tableContent,
-          if (_visibleRows < _sortedItems.length)
-            widget.customIncreaseRow != null
-                ? widget.customIncreaseRow!(
-                    () {
-                      setState(
-                        () {
-                          _visibleRows += widget.increaseRowLimit ?? 3;
-
-                          if (_visibleRows > _sortedItems.length) {
-                            _visibleRows = _sortedItems.length;
-                          }
-
-                          if (columnController.sortColumnIndex != null) {
-                            _sortedItems = columnController.sortItems(widget.items, columnController.sortColumnIndex!, _visibleRows, true);
-                          }
-                        },
-                      );
-                    },
-                  )
-                : IconButton(
-                    iconSize: 30,
-                    onPressed: () {
-                      setState(
-                        () {
-                          _visibleRows += widget.increaseRowLimit ?? 3;
-
-                          if (_visibleRows > _sortedItems.length) {
-                            _visibleRows = _sortedItems.length;
-                          }
-
-                          if (columnController.sortColumnIndex != null) {
-                            _sortedItems = columnController.sortItems(widget.items, columnController.sortColumnIndex!, _visibleRows, true);
-                          }
-                        },
-                      );
-                    },
-                    icon: Icon(
-                      widget.loadMoreIcon ?? Icons.add_circle_sharp,
-                      color: Colors.black,
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        controller: widget.isInfinityLoading ? _verticalScrollController : null,
+        scrollDirection: Axis.vertical,
+        child: Column(
+          children: [
+            tableContent,
+            if (!widget.isInfinityLoading && _visibleRows < _sortedItems.length)
+              widget.customIncreaseRow != null
+                  ? widget.customIncreaseRow!(() {
+                      _loadMoreItems();
+                    })
+                  : IconButton(
+                      iconSize: 30,
+                      onPressed: () {
+                        _loadMoreItems();
+                      },
+                      icon: Icon(
+                        widget.loadMoreIcon ?? Icons.add_circle_sharp,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-        ],
+          ],
+        ),
       ),
     );
   }
