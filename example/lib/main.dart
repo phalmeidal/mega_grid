@@ -85,12 +85,13 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     ];
 
     return MegaGrid(
-      items: TableData().generateCompanyData(100),
+      items: TableData().generateCompanyData(500),
       columns: columns,
       feedback: (t) => CustomWidgets.customFeedback(t),
       customIncreaseRow: CustomWidgets.customLoadButton,
-      initialRowLimit: 5,
-      increaseRowLimit: 5,
+      height: 400,
+      initialRowLimit: 10,
+      increaseRowLimit: 10,
       isInfinityLoading: true,
       style: MegaGridStyle(
         headerTextStyle: const TextStyle(fontWeight: FontWeight.bold),

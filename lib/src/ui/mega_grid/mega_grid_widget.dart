@@ -24,6 +24,11 @@ class MegaGrid extends StatefulWidget {
   final bool? enableColorReceiverDrag;
 
   /// The initial number of rows to display in the table.
+  ///
+  /// Note: When used with infinite scrolling via `isInfinityLoading`,
+  /// `initialRowLimit` will be ignored if its value is less than the number
+  /// of rows required to fill the entire element size. In such cases, the
+  /// value will automatically be set to the minimum required to enable scrolling.
   final int? initialRowLimit;
 
   /// The number of additional rows to display when the "Load More" action is triggered.
@@ -32,6 +37,18 @@ class MegaGrid extends StatefulWidget {
 
   /// Customizable widget that displays a button or control to increase visible rows.
   final Widget Function(VoidCallback)? customIncreaseRow;
+
+  /// Determines the type of loading mechanism for adding more items to the table.
+  ///
+  /// - If `true`, enables infinite scrolling, where more items are added to the list
+  ///   dynamically as the user reaches the end of the current content.
+  /// - If `false`, additional items are loaded only when the user clicks a button
+  ///   to manually add more.
+  /// - If not set, the table will load all rows upfront.
+  ///
+  /// Note: If `initialRowLimit` is set, all elements will not be loaded, as the
+  /// number of rows will be restricted by the value of `initialRowLimit`, and
+  /// the default loading type will be manual.
   final bool isInfinityLoading;
 
   const MegaGrid({
@@ -48,7 +65,7 @@ class MegaGrid extends StatefulWidget {
     this.increaseRowLimit,
     this.loadMoreIcon,
     this.customIncreaseRow,
-    this.isInfinityLoading = true,
+    this.isInfinityLoading = false,
   });
 
   @override
@@ -181,8 +198,7 @@ class MegaGridState extends State<MegaGrid> {
                 if (frozenStartColumns.isNotEmpty)
                   FrozenColumns(
                     columns: frozenStartColumns,
-                    // sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                    sortedItems: _sortedItems.sublist(0, _visibleRows),
+                    sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -194,7 +210,6 @@ class MegaGridState extends State<MegaGrid> {
                   child: ScrollableColumns(
                     columns: scrollableColumns,
                     sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                    // sortedItems: _sortedItems.sublist(0, _visibleRows),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -207,7 +222,7 @@ class MegaGridState extends State<MegaGrid> {
                 if (frozenEndColumns.isNotEmpty)
                   FrozenColumns(
                     columns: frozenEndColumns,
-                    sortedItems: _sortedItems.sublist(0, _visibleRows),
+                    sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
                     columnController: columnController,
                     selectionController: selectionController,
                     style: widget.style,
@@ -222,30 +237,44 @@ class MegaGridState extends State<MegaGrid> {
       ),
     );
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        controller: widget.isInfinityLoading ? _verticalScrollController : null,
-        scrollDirection: Axis.vertical,
-        child: Column(
-          children: [
-            tableContent,
-            if (!widget.isInfinityLoading && _visibleRows < _sortedItems.length)
-              widget.customIncreaseRow != null
-                  ? widget.customIncreaseRow!(() {
-                      _loadMoreItems();
-                    })
-                  : IconButton(
-                      iconSize: 30,
-                      onPressed: () {
-                        _loadMoreItems();
-                      },
-                      icon: Icon(
-                        widget.loadMoreIcon ?? Icons.add_circle_sharp,
-                        color: Colors.black,
-                      ),
-                    ),
-          ],
+    return MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          height: widget.height,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    controller: widget.isInfinityLoading ? _verticalScrollController : null,
+                    scrollDirection: Axis.vertical,
+                    child: tableContent,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 3),
+              SizedBox(
+                child: Center(
+                  child: (!widget.isInfinityLoading && _visibleRows < _sortedItems.length)
+                      ? (widget.customIncreaseRow != null
+                          ? widget.customIncreaseRow!(() {
+                              _loadMoreItems();
+                            })
+                          : IconButton(
+                              iconSize: 30,
+                              onPressed: _loadMoreItems,
+                              icon: Icon(
+                                widget.loadMoreIcon ?? Icons.add_circle_sharp,
+                                color: Colors.black,
+                              ),
+                            ))
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 3),
+            ],
+          ),
         ),
       ),
     );
