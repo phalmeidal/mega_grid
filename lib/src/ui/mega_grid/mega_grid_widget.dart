@@ -51,6 +51,24 @@ class MegaGrid extends StatefulWidget {
   /// the default loading type will be manual.
   final bool isInfinityLoading;
 
+  /// Determines the custom loading widget to be displayed during loading operations.
+  ///
+  /// - If set, this widget will take priority and be used as the loading indicator,
+  ///   overriding any value provided by `circularProgress`.
+  /// - If both `customLoader` and `circularProgress` are not set, a default loading
+  ///   indicator will be rendered.
+  final Widget? customLoader;
+
+  /// Determines the circular progress indicator to be displayed during loading operations.
+  ///
+  /// - If set, this instance of `CircularProgressIndicator` will be used as the
+  ///   loading indicator unless a `customLoader` is also set.
+  /// - If both `circularProgress` and `customLoader` are not set, a default loading
+  ///   indicator will be rendered.
+  ///
+  /// Note: The `customLoader` takes priority if both are set.
+  final CircularProgressIndicator? circularProgress;
+
   const MegaGrid({
     super.key,
     required this.items,
@@ -66,6 +84,8 @@ class MegaGrid extends StatefulWidget {
     this.loadMoreIcon,
     this.customIncreaseRow,
     this.isInfinityLoading = false,
+    this.customLoader,
+    this.circularProgress,
   });
 
   @override
@@ -80,6 +100,7 @@ class MegaGridState extends State<MegaGrid> {
   late List<TableItem> _sortedItems;
   late FocusNode _gridFocusNode;
   int _visibleRows = 0;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -151,13 +172,13 @@ class MegaGridState extends State<MegaGrid> {
   void _checkAndLoadMoreItems() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_verticalScrollController.position.maxScrollExtent == 0 && _visibleRows < widget.items.length) {
-        _loadMoreItems();
+        _loadMoreItems(true);
         _checkAndLoadMoreItems();
       }
     });
   }
 
-  void _loadMoreItems() {
+  void _loadMoreItems([bool isChecking = false]) {
     final increment = widget.increaseRowLimit ?? 10;
     final remainingItems = widget.items.length - _visibleRows;
 
@@ -167,8 +188,23 @@ class MegaGridState extends State<MegaGrid> {
 
     if (remainingItems > 0) {
       setState(() {
-        _visibleRows += min(increment, remainingItems);
+        _isLoading = true;
       });
+
+      isChecking
+          ? (
+              _visibleRows += min(increment, remainingItems),
+              _isLoading = false,
+            )
+          : (Future.delayed(
+              const Duration(seconds: 1),
+              () {
+                setState(() {
+                  _visibleRows += min(increment, remainingItems);
+                  _isLoading = false;
+                });
+              },
+            ));
     }
   }
 
@@ -189,50 +225,55 @@ class MegaGridState extends State<MegaGrid> {
             _gridFocusNode.requestFocus();
           }
         },
-        child: SizedBox(
-          width: width,
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (frozenStartColumns.isNotEmpty)
-                  FrozenColumns(
-                    columns: frozenStartColumns,
-                    sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                    columnController: columnController,
-                    selectionController: selectionController,
-                    style: widget.style,
-                    feedback: widget.feedback,
-                    enableColorReceiverDrag: widget.enableColorReceiverDrag,
-                    setState: setState,
-                  ),
-                Expanded(
-                  child: ScrollableColumns(
-                    columns: scrollableColumns,
-                    sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                    columnController: columnController,
-                    selectionController: selectionController,
-                    style: widget.style,
-                    feedback: widget.feedback,
-                    enableColorReceiverDrag: widget.enableColorReceiverDrag,
-                    setState: setState,
-                    scrollController: _horizontalScrollController,
-                  ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: width,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (frozenStartColumns.isNotEmpty)
+                      FrozenColumns(
+                        columns: frozenStartColumns,
+                        sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                        columnController: columnController,
+                        selectionController: selectionController,
+                        style: widget.style,
+                        feedback: widget.feedback,
+                        enableColorReceiverDrag: widget.enableColorReceiverDrag,
+                        setState: setState,
+                      ),
+                    Expanded(
+                      child: ScrollableColumns(
+                        columns: scrollableColumns,
+                        sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                        columnController: columnController,
+                        selectionController: selectionController,
+                        style: widget.style,
+                        feedback: widget.feedback,
+                        enableColorReceiverDrag: widget.enableColorReceiverDrag,
+                        setState: setState,
+                        scrollController: _horizontalScrollController,
+                      ),
+                    ),
+                    if (frozenEndColumns.isNotEmpty)
+                      FrozenColumns(
+                        columns: frozenEndColumns,
+                        sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                        columnController: columnController,
+                        selectionController: selectionController,
+                        style: widget.style,
+                        feedback: widget.feedback,
+                        enableColorReceiverDrag: widget.enableColorReceiverDrag,
+                        setState: setState,
+                      ),
+                  ],
                 ),
-                if (frozenEndColumns.isNotEmpty)
-                  FrozenColumns(
-                    columns: frozenEndColumns,
-                    sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                    columnController: columnController,
-                    selectionController: selectionController,
-                    style: widget.style,
-                    feedback: widget.feedback,
-                    enableColorReceiverDrag: widget.enableColorReceiverDrag,
-                    setState: setState,
-                  ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -253,6 +294,11 @@ class MegaGridState extends State<MegaGrid> {
                   ),
                 ),
               ),
+              if (_isLoading)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: widget.customLoader ?? widget.circularProgress ?? const CircularProgressIndicator(),
+                ),
               const SizedBox(height: 3),
               SizedBox(
                 child: Center(

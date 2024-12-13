@@ -89,6 +89,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       columns: columns,
       feedback: (t) => CustomWidgets.customFeedback(t),
       customIncreaseRow: CustomWidgets.customLoadButton,
+      customLoader: CustomWidgets.customLoader(),
       height: 400,
       initialRowLimit: 10,
       increaseRowLimit: 10,

@@ -50,7 +50,7 @@ class CustomWidgets {
   /// - [onTap]: A [VoidCallback] executed when the button is tapped, which adds
   ///   more items to the table.
   /// Returns a [Widget] that can be directly used in layouts.
-  /// ### Example Usage: 
+  /// ### Example Usage:
   ///  ```dart
   /// return MegaGrid(
   ///   customIncreaseRow: CustomWidgets.customLoadButton,
@@ -80,6 +80,99 @@ class CustomWidgets {
           ),
         ),
       ),
+    );
+  }
+
+  /// Creates a customizable loading indicator widget.
+  ///
+  /// This widget displays three animated dots that move up and down,
+  /// indicating that more items are being loaded. It includes a text label
+  /// to inform users about the loading process, enhancing the user experience.
+  ///
+  /// Returns a [Widget] that can be easily integrated into layouts as a
+  /// loading indicator.
+  ///
+  /// ### Example Usage:
+  /// ```dart
+  /// return MegaGrid(
+  ///   child: CustomWidgets.customLoader(),
+  /// );
+  /// ```
+  ///
+  static Widget customLoader() {
+    return const Material(
+      child: SizedBox(
+          height: 25,
+          width: 300,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Loading items',
+                style: TextStyle(fontSize: 15),
+              ),
+              LoadingDots(),
+            ],
+          )),
+    );
+  }
+}
+
+class LoadingDots extends StatefulWidget {
+  const LoadingDots({super.key});
+
+  @override
+  LoadingDotsState createState() => LoadingDotsState();
+}
+
+class LoadingDotsState extends State<LoadingDots> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (index) {
+        final animation = Tween<double>(begin: 5, end: 12).animate(CurvedAnimation(
+          parent: _controller,
+          curve: Interval(
+            index * 0.3,
+            1.0,
+            curve: Curves.easeInOut,
+          ),
+        ));
+
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 5),
+              child: Transform.translate(
+                offset: Offset(0, -animation.value),
+                child: const Text(
+                  '.',
+                  style: TextStyle(fontSize: 25, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }
