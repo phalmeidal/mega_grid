@@ -26,7 +26,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
@@ -57,22 +57,32 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
   Widget _buildFirstTable() {
     final columns = [
-      const MegaColumn(title: 'Empresa', field: 'empresa', canHide: false),
-      const MegaColumn(title: 'Tomador', field: 'tomador'),
-      const MegaColumn(title: 'Parcela', field: 'nrParcela'),
-      const MegaColumn(title: 'Vencimento', field: 'dtVencimento'),
-      const MegaColumn(title: 'Valor', field: 'vlPrestacao', canHide: false),
+      const MegaColumn(title: 'Empresa', field: 'company', canHide: false),
+      const MegaColumn(title: 'Tomador', field: 'borrower'),
+      const MegaColumn(title: 'Parcela', field: 'installment'),
+      const MegaColumn(title: 'Vencimento', field: 'deadline'),
+      const MegaColumn(title: 'Valor', field: 'value', canHide: false),
     ];
 
-    return _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : MegaGrid(
-            items: _items,
-            columns: columns,
-            initialRowLimit: 1,
-            increaseRowLimit: 1,
-            isInfinityLoading: true,
-          );
+    return MegaGrid(
+      items: TableData().generateCompanyData(500),
+      columns: columns,
+      height: 400,
+      initialRowLimit: 10,
+      increaseRowLimit: 10,
+      isInfinityLoading: true,
+      style: MegaGridStyle(
+        headerTextStyle: const TextStyle(fontWeight: FontWeight.bold),
+        cellTextStyle: const TextStyle(color: Colors.black),
+        headerBackgroundColor: Colors.white,
+        rowBackgroundColor: const Color(0xFFFAFAFA),
+        rowTextStyle: const TextStyle(color: Colors.black),
+        rowAlternateBackgroundColor: Colors.white,
+        borderColor: Colors.transparent,
+        borderWidth: 1.0,
+        borderRadius: BorderRadius.circular(54),
+      ),
+    );
   }
 
   Widget _buildSecondTable() {
@@ -108,6 +118,42 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     );
   }
 
+  Widget _buildThirdTable() {
+    final columns = [
+      const MegaColumn(title: 'Empresa', field: 'empresa', canHide: false),
+      const MegaColumn(title: 'Tomador', field: 'tomador'),
+      const MegaColumn(title: 'Parcela', field: 'nrParcela'),
+      const MegaColumn(title: 'Vencimento', field: 'dtVencimento'),
+      const MegaColumn(title: 'Valor', field: 'vlPrestacao', canHide: false),
+    ];
+
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _items.isEmpty 
+            ? Column(
+                children: [
+                  SizedBox(
+                    height: 150,
+                    child: MegaGrid(
+                      items: _items,
+                      columns: columns,
+                      initialRowLimit: 1,
+                      increaseRowLimit: 1,
+                      isInfinityLoading: true,
+                    ),
+                  ),
+                  const Text('No data found'),
+                ],
+              )
+            : MegaGrid(
+                items: _items,
+                columns: columns,
+                initialRowLimit: 1,
+                increaseRowLimit: 1,
+                isInfinityLoading: true,
+              );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -119,6 +165,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
             tabs: const [
               Tab(text: 'Tabela 1'),
               Tab(text: 'Tabela 2'),
+              Tab(text: 'Tabela 3'),
             ],
           ),
         ),
@@ -127,6 +174,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
           children: [
             _buildFirstTable(),
             _buildSecondTable(),
+            _buildThirdTable(),
           ],
         ),
       ),
