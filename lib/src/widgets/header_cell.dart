@@ -152,58 +152,60 @@ class HeaderCell extends StatelessWidget {
         },
         child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
-              child: Draggable<int>(
-                data: index,
-                feedback: feedback != null
-                    ? feedback!(column.title)
-                    : Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: style?.feedbackBgColor ?? Colors.grey.withOpacity(0.85),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            column.title,
-                            style: style?.headerTextStyle?.copyWith(
-                              color: style?.feedbackTextColor ?? Colors.white,
-                              fontWeight: FontWeight.bold,
+            Draggable<int>(
+              data: index,
+              feedback: feedback != null
+                  ? feedback!(column.title)
+                  : Material(
+                      elevation: 4,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: style?.feedbackBgColor ?? Colors.white,
+                          borderRadius: BorderRadius.circular(3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              blurRadius: 5,
                             ),
-                          ),
+                          ],
                         ),
-                      ),
-                child: DragTarget<int>(
-                  onAcceptWithDetails: (draggedIndex) {
-                    setState(() {
-                      controller.swapColumns(draggedIndex.data, index);
-                    });
-                  },
-                  builder: (context, candidateData, rejectedData) {
-                    bool isDraggingOver = candidateData.isNotEmpty && candidateData.first != index && enableColorReceiverDrag != false;
-
-                    return Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: isDraggingOver ? style?.receiverDragColor ?? Colors.blue.withOpacity(0.2) : Colors.transparent,
-                        borderRadius: style?.receiverDragBorder ?? BorderRadius.zero,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
                         child: Text(
                           column.title,
-                          style: style?.headerTextStyle,
-                          textAlign: column.titleTextAlign,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                          style: style?.headerTextStyle?.copyWith(
+                            color: style?.feedbackTextColor ?? Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+              child: DragTarget<int>(
+                onAcceptWithDetails: (draggedIndex) {
+                  setState(() {
+                    controller.swapColumns(draggedIndex.data, index);
+                  });
+                },
+                builder: (context, candidateData, rejectedData) {
+                  bool isDraggingOver = candidateData.isNotEmpty && candidateData.first != index && enableColorReceiverDrag != false;
+
+                  return Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDraggingOver ? style?.receiverDragColor ?? Colors.blue.withOpacity(0.15) : Colors.transparent,
+                      borderRadius: style?.receiverDragBorder ?? BorderRadius.zero,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 16, 16, 16),
+                      child: Text(
+                        column.title,
+                        style: style?.headerTextStyle,
+                        textAlign: column.titleTextAlign,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             Positioned(
