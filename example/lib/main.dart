@@ -1,4 +1,3 @@
-import 'package:example/src/widgets/custom_widgets.dart';
 import 'package:example/src/data/table_data.dart';
 import 'package:flutter/material.dart';
 import 'package:mega_grid/mega_grid.dart';
@@ -68,7 +67,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       items: TableData().generateCompanyData(500),
       columns: columns,
       height: 400,
-      width: 500,
+      width: 400,
       initialRowLimit: 10,
       increaseRowLimit: 10,
       isInfinityLoading: true,
