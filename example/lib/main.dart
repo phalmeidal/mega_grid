@@ -68,13 +68,14 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       items: TableData().generateCompanyData(500),
       columns: columns,
       height: 400,
+      width: 500,
       initialRowLimit: 10,
       increaseRowLimit: 10,
       isInfinityLoading: true,
       style: MegaGridStyle(
         headerTextStyle: const TextStyle(fontWeight: FontWeight.bold),
         cellTextStyle: const TextStyle(color: Colors.black),
-        headerBackgroundColor: Colors.white,
+        headerBackgroundColor: Colors.blue,
         rowBackgroundColor: const Color(0xFFFAFAFA),
         rowTextStyle: const TextStyle(color: Colors.black),
         rowAlternateBackgroundColor: Colors.white,
@@ -95,26 +96,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     ];
 
     return MegaGrid(
-      items: TableData().generateCompanyData(500),
+      items: TableData().generateCompanyData(20),
       columns: columns,
-      feedback: (t) => CustomWidgets.customFeedback(t),
-      customIncreaseRow: CustomWidgets.customLoadButton,
-      customLoader: CustomWidgets.customLoader(),
-      height: 400,
-      initialRowLimit: 10,
-      increaseRowLimit: 10,
-      isInfinityLoading: true,
-      style: MegaGridStyle(
-        headerTextStyle: const TextStyle(fontWeight: FontWeight.bold),
-        cellTextStyle: const TextStyle(color: Colors.black),
-        headerBackgroundColor: Colors.white,
-        rowBackgroundColor: const Color(0xFFFAFAFA),
-        rowTextStyle: const TextStyle(color: Colors.black),
-        rowAlternateBackgroundColor: Colors.white,
-        borderColor: Colors.transparent,
-        borderWidth: 1.0,
-        borderRadius: BorderRadius.circular(54),
-      ),
     );
   }
 
@@ -129,7 +112,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
-        : _items.isEmpty 
+        : _items.isEmpty
             ? Column(
                 children: [
                   SizedBox(
@@ -157,6 +140,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Grid Example'),

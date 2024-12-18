@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'dart:math';
+import 'package:csv/csv.dart';
+import 'package:excel/excel.dart' hide Border;
+import 'package:mega_grid/src/widgets/frozen_columns.dart';
+import 'package:mega_grid/src/widgets/scrollable_columns.dart';
+import 'package:universal_html/html.dart' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mega_grid/src/controllers/selection_controller.dart';
-import 'package:mega_grid/src/widgets/grid_cell.dart';
-import 'package:mega_grid/src/widgets/header_cell.dart';
 import '../../models/table_items.dart';
 import 'mega_column.dart';
 import 'mega_grid_style.dart';
@@ -69,6 +73,10 @@ class MegaGrid extends StatefulWidget {
   /// Note: The `customLoader` takes priority if both are set.
   final CircularProgressIndicator? circularProgress;
 
+  final bool showExportButton;
+
+  final IconData? downloadIcon;
+
   const MegaGrid({
     super.key,
     required this.items,
@@ -86,6 +94,8 @@ class MegaGrid extends StatefulWidget {
     this.isInfinityLoading = false,
     this.customLoader,
     this.circularProgress,
+    this.showExportButton = true,
+    this.downloadIcon,
   });
 
   @override
@@ -208,6 +218,92 @@ class MegaGridState extends State<MegaGrid> {
     }
   }
 
+  void _exportCsv() {
+    List<List<dynamic>> rows = [];
+
+    rows.add(columnController.columns.asMap().entries.where((entry) => columnController.isColumnVisible(entry.key)).map((entry) => entry.value.title).toList());
+
+    for (var item in _sortedItems.take(_visibleRows)) {
+      List<dynamic> row = [];
+      for (var entry in columnController.columns.asMap().entries) {
+        int index = entry.key;
+        var column = entry.value;
+        if (columnController.isColumnVisible(index)) {
+          row.add(item[column.field]);
+        }
+      }
+      rows.add(row);
+    }
+
+    String csv = const ListToCsvConverter().convert(rows);
+
+    final bytes = utf8.encode(csv);
+    final blob = html.Blob([bytes]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    (html.document.createElement('a') as html.AnchorElement)
+      ..href = url
+      ..download = 'tabela.csv'
+      ..click();
+
+    html.Url.revokeObjectUrl(url);
+  }
+
+  void _exportXlsx() {
+    final excel = Excel.createExcel();
+    final sheet = excel.sheets[excel.getDefaultSheet()];
+
+    if (sheet == null) {
+      throw Exception('Nenhuma planilha padrão foi criada.');
+    }
+
+    var headerRow = columnController.columns.asMap().entries.where((entry) => columnController.isColumnVisible(entry.key)).map((entry) => entry.value.title).toList();
+    CellStyle headerStyle = CellStyle(bold: true);
+
+    for (var colIndex = 0; colIndex < headerRow.length; colIndex++) {
+      final cell = sheet.cell(CellIndex.indexByColumnRow(
+        columnIndex: colIndex,
+        rowIndex: 0,
+      ));
+      cell.value = TextCellValue(headerRow[colIndex]);
+      cell.cellStyle = headerStyle;
+    }
+
+    for (var rowIndex = 0; rowIndex < _visibleRows && rowIndex < _sortedItems.length; rowIndex++) {
+      var item = _sortedItems[rowIndex];
+      var colCounter = 0;
+
+      for (var entry in columnController.columns.asMap().entries) {
+        int index = entry.key;
+        var column = entry.value;
+
+        if (columnController.isColumnVisible(index)) {
+          var value = item[column.field] ?? '';
+          sheet
+              .cell(CellIndex.indexByColumnRow(
+                columnIndex: colCounter,
+                rowIndex: rowIndex + 1,
+              ))
+              .value = TextCellValue(value.toString());
+          colCounter++;
+        }
+      }
+    }
+
+    // Gerar os bytes do arquivo Excel
+    final bytes = excel.encode();
+
+    if (bytes != null) {
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      html.AnchorElement()
+        ..href = url
+        ..download = 'table.xlsx'
+        ..click();
+
+      html.Url.revokeObjectUrl(url);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double width = widget.width ?? MediaQuery.of(context).size.width;
@@ -225,9 +321,35 @@ class MegaGridState extends State<MegaGrid> {
             _gridFocusNode.requestFocus();
           }
         },
-        child: Stack(
-          alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            if (widget.showExportButton)
+              SizedBox(
+                height: 30,
+                width: width,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: PopupMenuButton(
+                    tooltip: 'Export',
+                    icon: Icon(widget.downloadIcon ?? Icons.file_download_outlined),
+                    itemBuilder: (BuildContext context) => [
+                      PopupMenuItem(
+                        onTap: _exportCsv,
+                        child: const Text('Export to CSV'),
+                      ),
+                      PopupMenuItem(
+                        onTap: _exportXlsx,
+                        child: const Text('Export to XLSX'),
+                      ),
+                    ],
+                    style: ButtonStyle(
+                      overlayColor: WidgetStateProperty.all(Colors.transparent),
+                      iconSize: WidgetStateProperty.all(18.0),
+                    ),
+                  ),
+                ),
+              ),
             SizedBox(
               width: width,
               child: IntrinsicHeight(
@@ -279,6 +401,7 @@ class MegaGridState extends State<MegaGrid> {
     );
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: SizedBox(
           height: widget.height,
@@ -321,173 +444,6 @@ class MegaGridState extends State<MegaGrid> {
               const SizedBox(height: 3),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class FrozenColumns extends StatelessWidget {
-  final List<MapEntry<int, MegaColumn>> columns;
-  final List<TableItem> sortedItems;
-  final ColumnController columnController;
-  final SelectionController selectionController;
-  final MegaGridStyle? style;
-  final Widget Function(String text)? feedback;
-  final bool? enableColorReceiverDrag;
-  final Function(void Function()) setState;
-
-  const FrozenColumns({
-    super.key,
-    required this.columns,
-    required this.sortedItems,
-    required this.columnController,
-    required this.selectionController,
-    required this.style,
-    required this.feedback,
-    required this.enableColorReceiverDrag,
-    required this.setState,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    bool isFrozenEnd = columns.any((entry) => columnController.frozenEndColumns.contains(entry.key));
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          right: !isFrozenEnd
-              ? BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 2,
-                )
-              : BorderSide.none,
-          left: isFrozenEnd
-              ? BorderSide(
-                  color: Colors.grey[300]!,
-                  width: 2,
-                )
-              : BorderSide.none,
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: columns
-                .map((entry) => HeaderCell(
-                      column: entry.value,
-                      index: entry.key,
-                      style: style,
-                      controller: columnController,
-                      enableColorReceiverDrag: enableColorReceiverDrag,
-                      feedback: feedback,
-                      setState: setState,
-                    ))
-                .toList(),
-          ),
-          Column(
-            children: sortedItems.asMap().entries.map((itemEntry) {
-              final rowIndex = itemEntry.key;
-              final item = itemEntry.value;
-              final isAlternate = rowIndex % 2 == 1;
-
-              return Row(
-                children: columns.map((entry) {
-                  return GridCell(
-                    value: item[entry.value.field],
-                    column: entry.value,
-                    columnIndex: entry.key,
-                    rowIndex: itemEntry.key,
-                    isAlternate: isAlternate,
-                    style: style,
-                    controller: columnController,
-                    selectionController: selectionController,
-                    onCellTap: (rowIndex, columnIndex) {
-                      setState(() {
-                        selectionController.selectCell(rowIndex, columnIndex);
-                      });
-                    },
-                  );
-                }).toList(),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ScrollableColumns extends StatelessWidget {
-  final List<MapEntry<int, MegaColumn>> columns;
-  final List<TableItem> sortedItems;
-  final ColumnController columnController;
-  final SelectionController selectionController;
-  final MegaGridStyle? style;
-  final Widget Function(String text)? feedback;
-  final bool? enableColorReceiverDrag;
-  final Function(void Function()) setState;
-  final ScrollController scrollController;
-
-  const ScrollableColumns({
-    super.key,
-    required this.columns,
-    required this.sortedItems,
-    required this.columnController,
-    required this.selectionController,
-    required this.style,
-    required this.feedback,
-    required this.enableColorReceiverDrag,
-    required this.setState,
-    required this.scrollController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scrollbar(
-      controller: scrollController,
-      child: SingleChildScrollView(
-        controller: scrollController,
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: columns.map((entry) {
-            return Column(
-              children: [
-                HeaderCell(
-                  column: entry.value,
-                  index: entry.key,
-                  style: style,
-                  controller: columnController,
-                  enableColorReceiverDrag: enableColorReceiverDrag,
-                  feedback: feedback,
-                  setState: setState,
-                ),
-                Column(
-                  children: sortedItems.asMap().entries.map((itemEntry) {
-                    final rowIndex = itemEntry.key;
-                    final item = itemEntry.value;
-                    final isAlternate = rowIndex % 2 == 1;
-
-                    return GridCell(
-                      value: item[entry.value.field],
-                      column: entry.value,
-                      columnIndex: entry.key,
-                      rowIndex: itemEntry.key,
-                      isAlternate: isAlternate,
-                      style: style,
-                      controller: columnController,
-                      selectionController: selectionController,
-                      onCellTap: (rowIndex, columnIndex) {
-                        setState(() {
-                          selectionController.selectCell(rowIndex, columnIndex);
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-              ],
-            );
-          }).toList(),
         ),
       ),
     );
