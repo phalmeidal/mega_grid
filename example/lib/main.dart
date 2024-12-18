@@ -74,7 +74,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       style: MegaGridStyle(
         headerTextStyle: const TextStyle(fontWeight: FontWeight.bold),
         cellTextStyle: const TextStyle(color: Colors.black),
-        headerBackgroundColor: Colors.blue,
+        headerBackgroundColor: Colors.white,
         rowBackgroundColor: const Color(0xFFFAFAFA),
         rowTextStyle: const TextStyle(color: Colors.black),
         rowAlternateBackgroundColor: Colors.white,
