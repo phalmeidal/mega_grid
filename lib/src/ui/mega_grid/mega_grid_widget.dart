@@ -111,6 +111,7 @@ class MegaGridState extends State<MegaGrid> {
   late FocusNode _gridFocusNode;
   int _visibleRows = 0;
   bool _isLoading = false;
+  bool isFirstRender = true;
 
   @override
   void initState() {
@@ -149,7 +150,6 @@ class MegaGridState extends State<MegaGrid> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    columnController.initializeColumnWidths(context, widget.width);
   }
 
   void handleSort(int columnIndex) {
@@ -306,146 +306,155 @@ class MegaGridState extends State<MegaGrid> {
 
   @override
   Widget build(BuildContext context) {
-    double width = widget.width ?? MediaQuery.of(context).size.width;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final frozenStartColumns = columnController.columns.asMap().entries.where((e) => columnController.frozenStartColumns.contains(e.key) && columnController.isColumnVisible(e.key)).toList();
+        final frozenEndColumns = columnController.columns.asMap().entries.where((e) => columnController.frozenEndColumns.contains(e.key) && columnController.isColumnVisible(e.key)).toList();
+        final scrollableColumns = columnController.columns.asMap().entries.where((e) => !columnController.isColumnFrozen(e.key) && columnController.isColumnVisible(e.key)).toList();
 
-    final frozenStartColumns = columnController.columns.asMap().entries.where((e) => columnController.frozenStartColumns.contains(e.key) && columnController.isColumnVisible(e.key)).toList();
-    final frozenEndColumns = columnController.columns.asMap().entries.where((e) => columnController.frozenEndColumns.contains(e.key) && columnController.isColumnVisible(e.key)).toList();
-    final scrollableColumns = columnController.columns.asMap().entries.where((e) => !columnController.isColumnFrozen(e.key) && columnController.isColumnVisible(e.key)).toList();
+        double width = widget.width ?? constraints.maxWidth;
 
-    Widget tableContent = KeyboardListener(
-      focusNode: _gridFocusNode,
-      onKeyEvent: _handleKeyEvent,
-      child: GestureDetector(
-        onTapDown: (details) {
-          if (!_gridFocusNode.hasFocus) {
-            _gridFocusNode.requestFocus();
-          }
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (widget.showExportButton)
-              SizedBox(
-                height: 30,
-                width: width,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: PopupMenuButton(
-                    tooltip: 'Export',
-                    icon: Icon(widget.downloadIcon ?? Icons.file_download_outlined),
-                    itemBuilder: (BuildContext context) => [
-                      PopupMenuItem(
-                        onTap: _exportCsv,
-                        child: const Text('Export to CSV'),
+        if (isFirstRender) {
+          columnController.initializeColumnWidths(context, width);
+          isFirstRender = false;
+        }
+
+        Widget tableContent = KeyboardListener(
+          focusNode: _gridFocusNode,
+          onKeyEvent: _handleKeyEvent,
+          child: GestureDetector(
+            onTapDown: (details) {
+              if (!_gridFocusNode.hasFocus) {
+                _gridFocusNode.requestFocus();
+              }
+            },
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (widget.showExportButton)
+                  SizedBox(
+                    height: 30,
+                    width: width,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: PopupMenuButton(
+                        tooltip: 'Export',
+                        icon: Icon(widget.downloadIcon ?? Icons.file_download_outlined),
+                        itemBuilder: (BuildContext context) => [
+                          PopupMenuItem(
+                            onTap: _exportCsv,
+                            child: const Text('Export to CSV'),
+                          ),
+                          PopupMenuItem(
+                            onTap: _exportXlsx,
+                            child: const Text('Export to XLSX'),
+                          ),
+                        ],
+                        style: ButtonStyle(
+                          overlayColor: WidgetStateProperty.all(Colors.transparent),
+                          iconSize: WidgetStateProperty.all(18.0),
+                        ),
                       ),
-                      PopupMenuItem(
-                        onTap: _exportXlsx,
-                        child: const Text('Export to XLSX'),
-                      ),
-                    ],
-                    style: ButtonStyle(
-                      overlayColor: WidgetStateProperty.all(Colors.transparent),
-                      iconSize: WidgetStateProperty.all(18.0),
+                    ),
+                  ),
+                SizedBox(
+                  width: width,
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (frozenStartColumns.isNotEmpty)
+                          FrozenColumns(
+                            columns: frozenStartColumns,
+                            sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                            columnController: columnController,
+                            selectionController: selectionController,
+                            style: widget.style,
+                            feedback: widget.feedback,
+                            enableColorReceiverDrag: widget.enableColorReceiverDrag,
+                            setState: setState,
+                          ),
+                        Expanded(
+                          child: ScrollableColumns(
+                            columns: scrollableColumns,
+                            sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                            columnController: columnController,
+                            selectionController: selectionController,
+                            style: widget.style,
+                            feedback: widget.feedback,
+                            enableColorReceiverDrag: widget.enableColorReceiverDrag,
+                            setState: setState,
+                            scrollController: _horizontalScrollController,
+                          ),
+                        ),
+                        if (frozenEndColumns.isNotEmpty)
+                          FrozenColumns(
+                            columns: frozenEndColumns,
+                            sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
+                            columnController: columnController,
+                            selectionController: selectionController,
+                            style: widget.style,
+                            feedback: widget.feedback,
+                            enableColorReceiverDrag: widget.enableColorReceiverDrag,
+                            setState: setState,
+                          ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            SizedBox(
-              width: width,
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (frozenStartColumns.isNotEmpty)
-                      FrozenColumns(
-                        columns: frozenStartColumns,
-                        sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                        columnController: columnController,
-                        selectionController: selectionController,
-                        style: widget.style,
-                        feedback: widget.feedback,
-                        enableColorReceiverDrag: widget.enableColorReceiverDrag,
-                        setState: setState,
-                      ),
-                    Expanded(
-                      child: ScrollableColumns(
-                        columns: scrollableColumns,
-                        sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                        columnController: columnController,
-                        selectionController: selectionController,
-                        style: widget.style,
-                        feedback: widget.feedback,
-                        enableColorReceiverDrag: widget.enableColorReceiverDrag,
-                        setState: setState,
-                        scrollController: _horizontalScrollController,
+              ],
+            ),
+          ),
+        );
+
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: SizedBox(
+              height: widget.height,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SingleChildScrollView(
+                        controller: widget.isInfinityLoading ? _verticalScrollController : null,
+                        scrollDirection: Axis.vertical,
+                        child: tableContent,
                       ),
                     ),
-                    if (frozenEndColumns.isNotEmpty)
-                      FrozenColumns(
-                        columns: frozenEndColumns,
-                        sortedItems: _sortedItems.sublist(0, min(_visibleRows, _sortedItems.length)),
-                        columnController: columnController,
-                        selectionController: selectionController,
-                        style: widget.style,
-                        feedback: widget.feedback,
-                        enableColorReceiverDrag: widget.enableColorReceiverDrag,
-                        setState: setState,
-                      ),
-                  ],
-                ),
+                  ),
+                  if (_isLoading)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: widget.customLoader ?? widget.circularProgress ?? const CircularProgressIndicator(),
+                    ),
+                  const SizedBox(height: 3),
+                  SizedBox(
+                    child: Center(
+                      child: (!widget.isInfinityLoading && _visibleRows < _sortedItems.length)
+                          ? (widget.customIncreaseRow != null
+                              ? widget.customIncreaseRow!(() {
+                                  _loadMoreItems();
+                                })
+                              : IconButton(
+                                  iconSize: 30,
+                                  onPressed: _loadMoreItems,
+                                  icon: Icon(
+                                    widget.loadMoreIcon ?? Icons.add_circle_sharp,
+                                    color: Colors.black,
+                                  ),
+                                ))
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: SizedBox(
-          height: widget.height,
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SingleChildScrollView(
-                    controller: widget.isInfinityLoading ? _verticalScrollController : null,
-                    scrollDirection: Axis.vertical,
-                    child: tableContent,
-                  ),
-                ),
-              ),
-              if (_isLoading)
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: widget.customLoader ?? widget.circularProgress ?? const CircularProgressIndicator(),
-                ),
-              const SizedBox(height: 3),
-              SizedBox(
-                child: Center(
-                  child: (!widget.isInfinityLoading && _visibleRows < _sortedItems.length)
-                      ? (widget.customIncreaseRow != null
-                          ? widget.customIncreaseRow!(() {
-                              _loadMoreItems();
-                            })
-                          : IconButton(
-                              iconSize: 30,
-                              onPressed: _loadMoreItems,
-                              icon: Icon(
-                                widget.loadMoreIcon ?? Icons.add_circle_sharp,
-                                color: Colors.black,
-                              ),
-                            ))
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 3),
-            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
